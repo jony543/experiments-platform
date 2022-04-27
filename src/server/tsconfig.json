@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "target": "ES2020",
+        "sourceMap": true,
+        "module": "commonjs",
+        "esModuleInterop": true,
+        "removeComments": true,
+        "outDir": "../../dist/server",
+        "moduleResolution": "node",
+        "types": [
+            "node"
+        ]
+    },
+}
