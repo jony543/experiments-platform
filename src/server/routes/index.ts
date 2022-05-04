@@ -1,20 +1,18 @@
 import express, { Application } from 'express';
 import path from 'path';
 import { createProxyMiddleware } from 'http-proxy-middleware';
+import authRouter, { verifyMiddleware } from './auth';
 
 export default (app: Application) => {
     app.get('/', (req, res) => {
         return res.status(200).send('OK');
     });
     
+    app.use('/auth', authRouter);
     const router = express.Router();
-    router.post('/login', async (req, res) => {
-        
-    });
-    router.post('/register', async (req, res) => {
-        
-    });
+    router.use(verifyMiddleware);
     app.use('/admin-api', router);
+    
 
     const clientHandler = process.env.NODE_ENV == 'development' ? 
         createProxyMiddleware({target: 'http://localhost:3333/'}) : [

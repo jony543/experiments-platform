@@ -19,7 +19,7 @@ const App = () => {
                     <Routes>
                         {getRouteComponent('/', <div>Home Page!</div>)}
                         {getRouteComponent('/login', <Login />)}
-                        {getRouteComponent('/register', <Login />)}
+                        {getRouteComponent('/register', <Login register />)}
                     </Routes>
             </Content>
             <Footer>Footer</Footer>

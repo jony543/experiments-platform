@@ -1,4 +1,5 @@
 import { Db, MongoClient } from "mongodb";
+import { User } from "../types/models";
 
 let client: MongoClient;
 let db: Db;
@@ -10,6 +11,6 @@ export const Collections = {
         db = _db;
         client = _client;
     },
-    get Users() { return getCollection('users'); },
+    get Users() { return getCollection<User>('users'); },
     get Sessions() { return getCollection('sessions'); },
 }
