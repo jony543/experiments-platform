@@ -3,7 +3,10 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
     devServer: {
-        port: 3001,
+        port: 3333,
+        historyApiFallback: {
+            index: '/admin',
+        }
     },
     entry: './src/client/index.tsx',
     output: {
