@@ -29,6 +29,7 @@ export const verifyMiddleware = async (req: express.Request, res: express.Respon
     const decoded = verifyAuthCookie(req);
     if (decoded) {
        req.userId = decoded['_id'];
+       next();
     } else {
         return res.status(401).send();
     }

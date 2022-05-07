@@ -1,11 +1,22 @@
-import { Button, Form, Input } from "antd"
+import { Button, Form, Input } from "antd";
 import React from 'react';
+import { useSelector } from 'react-redux';
+import { Link } from "react-router-dom";
+import { Navigate } from 'react-router-dom';
+import { getClientRoute } from "../App";
 import { authenticate } from "../store/actions";
+import { getUser } from '../store/selectors';
+import { useStoreDispatch } from "../store/store";
 
-const Login = ({ register }: { register?: boolean }) => {
+const AuthForm = ({ register }: { register?: boolean }) => {
+    const dispatch = useStoreDispatch();
+    const user = useSelector(getUser);
+    if (user) {
+        return <Navigate to={getClientRoute('/')} />
+    }
     const onFinish = (values: any) => {
         console.log('auth form success:', values);
-        authenticate(values.username, values.password, register);
+        dispatch(authenticate(values.username, values.password, register));
     };
     const onFinishFailed = (errorInfo: any) => {
         console.log('auth form failed:', errorInfo);
@@ -33,7 +44,8 @@ const Login = ({ register }: { register?: boolean }) => {
                 {register ? 'Register' : 'Login'}
             </Button>
         </Form.Item>
+        <Link to={getClientRoute(register ? '/login' : '/register')}>{register ? 'login' : 'register'}</Link>
     </Form>
 }
 
-export default Login;
+export default AuthForm;

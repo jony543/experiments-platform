@@ -2,6 +2,8 @@ import express, { Application } from 'express';
 import path from 'path';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import authRouter, { verifyMiddleware } from './auth';
+import { Collections } from '../services/collections';
+import { ObjectId } from 'mongodb';
 
 export default (app: Application) => {
     app.get('/', (req, res) => {
@@ -9,8 +11,13 @@ export default (app: Application) => {
     });
     
     app.use('/auth', authRouter);
+
     const router = express.Router();
     router.use(verifyMiddleware);
+    router.get('/user', async (req, res) => {
+        const user = await Collections.Users.findOne({_id: new ObjectId(req.userId)});
+        return res.json(user);
+    })
     app.use('/admin-api', router);
     
 
