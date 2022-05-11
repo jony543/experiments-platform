@@ -1,5 +1,17 @@
-export type User = {
+import { ObjectId } from "mongodb";
+
+export interface BaseModel {
+    _id: ObjectId;
+}
+
+export interface User extends BaseModel {
     username: string;
     passwordHash: string;
     passwordSalt: string;
+}
+
+export interface Experiment extends BaseModel {
+    name: string;
+    user: ObjectId;
+    git: string;
 }

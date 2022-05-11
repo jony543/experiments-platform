@@ -1,5 +1,5 @@
 import express from "express";
-import { Collections } from "../services/collections";
+import { findOne, insertOne } from "../services/collections";
 import { randomBytes, pbkdf2Sync } from 'crypto';
 import { Collection } from "mongodb";
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
@@ -50,7 +50,8 @@ export const verifyAuthCookie = (req: express.Request) => {
 const authRouter = express.Router();
 authRouter.post('/login', async (req, res) => {
     const { username, password } = req.body as AuthParams;
-    let user = await Collections.Users.findOne({ username });
+
+    let user = await findOne('users', {username});
     if (!user) {
         await new Promise(res => setTimeout(res, 2941));
         return res.status(401).send();
@@ -63,12 +64,11 @@ authRouter.post('/login', async (req, res) => {
 
 authRouter.post('/register', async (req, res) => {
     const { username, password } = req.body as AuthParams;
-    let user = await Collections.Users.findOne({ username });
+    let user = await findOne('users',{ username });
     if (user)
         throw new Error('username_exits');
     const { passwordSalt, passwordHash } = hashPassword(password);
-    const { insertedId } = await Collections.Users.insertOne({ username, passwordHash, passwordSalt });
-    user = await Collections.Users.findOne({ _id: insertedId });
+    user = await insertOne('users', { username, passwordHash, passwordSalt });
     return setAuthCookieAndReturnUser(res, user);
 });
 

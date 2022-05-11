@@ -1,7 +1,7 @@
 import { Button, Form, Input } from "antd";
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Navigate } from 'react-router-dom';
 import { getClientRoute } from "../App";
 import { authenticate } from "../store/actions";
@@ -11,8 +11,9 @@ import { useStoreDispatch } from "../store/store";
 const AuthForm = ({ register }: { register?: boolean }) => {
     const dispatch = useStoreDispatch();
     const user = useSelector(getUser);
+    const {state} = useLocation();
     if (user) {
-        return <Navigate to={getClientRoute('/')} />
+        return <Navigate to={getClientRoute(state as string)} />
     }
     const onFinish = (values: any) => {
         console.log('auth form success:', values);

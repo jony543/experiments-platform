@@ -1,8 +1,8 @@
 import axios, { AxiosRequestConfig } from "axios"
 import { Dispatch } from "redux";
 import { AuthParams } from '../../server/types/api';
-import { User } from '../../server/types/models';
-import { ActionType, SetUserAction } from "./types";
+import { Experiment, User } from '../../server/types/models';
+import { ActionType, EditExperimentAction, SetExperimentsAction, SetUserAction } from "./types";
 
 const callApi = async <T>(dispatch: Dispatch, method: 'GET' | 'POST', url: string, data?: any) => {
     try {
@@ -42,4 +42,20 @@ export const fetchUser = () => async (dispatch: Dispatch) => {
         type: ActionType.SET_USER,
         user,
     } as SetUserAction);
+}
+
+export const fetchExperiments = () => async (dispatch: Dispatch) => {
+    const experiments = await callApi<Experiment[]>(dispatch, 'GET', `/admin-api/experiments`);
+    dispatch({
+        type: ActionType.SET_EXPERIMENTS,
+        experiments,
+    } as SetExperimentsAction);
+}
+
+export const editExperiment = (editData: Partial<Experiment>) => async (dispatch: Dispatch) => {
+    const experiment = await callApi<Experiment>(dispatch, 'POST', `/admin-api/experiments`, editData);
+    dispatch({
+        type: ActionType.EDIT_EXPERIMENT,
+        experiment,
+    } as EditExperimentAction);
 }
