@@ -35,7 +35,6 @@ export default (app: Application) => {
         createProxyMiddleware({target: 'http://localhost:3333/'}) : [
             (req, res, next) => {
                 req.url = req.url.replace('/admin', '') || '/';
-                console.log({newUrl: req.url});
                 next();
             }, 
             express.static(path.resolve(__dirname, '../../client')),
