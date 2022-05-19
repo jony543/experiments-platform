@@ -1,5 +1,6 @@
 declare global {
     var BASE_PATH: string;
+    var APP_PREFIX: string;
 }
 window.BASE_PATH = '/admin';
 import React from 'react';

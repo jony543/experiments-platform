@@ -11,7 +11,7 @@ import { fetchUser } from './store/actions';
 import { getUser } from './store/selectors';
 import { useStoreDispatch } from './store/store';
 
-export const getClientRoute = (url: string) => window.BASE_PATH + url;
+export const getClientRoute = (url: string) => APP_PREFIX + window.BASE_PATH + url;
 
 // https://dev.to/iamandrewluca/private-route-in-react-router-v6-lg5
 const PrivateRoute = ({ children, path } : React.PropsWithChildren<{path: string}>) => {

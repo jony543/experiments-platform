@@ -9,11 +9,12 @@ import garminRouter from './garmin';
 import workersApi from './workers';
 
 export default (app: Application) => {
-    app.get('/', (req, res) => {
+    const appRouter = express.Router();
+    appRouter.get('/', (req, res) => {
         return res.status(200).send('OK');
     });
     
-    app.use('/auth', authRouter);
+    appRouter.use('/auth', authRouter);
 
     const api = express.Router();
     api.use(verifyUserMiddleware);
@@ -22,13 +23,13 @@ export default (app: Application) => {
         return res.json(user);
     });
     api.use('/experiments', experimentsRouter);
-    app.use('/admin-api', api);
+    appRouter.use('/admin-api', api);
 
-    app.use('/workers-api', workersApi)
+    appRouter.use('/workers-api', workersApi)
 
     const publicRoutes = express.Router();
     publicRoutes.use('/garmin', garminRouter);
-    app.use('/public', publicRoutes);
+    appRouter.use('/public', publicRoutes);
     
     const clientHandler = process.env.NODE_ENV == 'development' ? 
         createProxyMiddleware({target: 'http://localhost:3333/'}) : [
@@ -40,5 +41,11 @@ export default (app: Application) => {
             express.static(path.resolve(__dirname, '../../client')),
             (req, res) => res.sendFile(path.resolve(__dirname, '../../client/index.html')),
         ];
-    app.get('/admin*', clientHandler);
+    appRouter.get('/admin*', clientHandler);
+
+    if (process.env.APP_PREFIX) {
+        app.use(process.env.APP_PREFIX, appRouter);
+    } else {
+        app.use(appRouter);
+    }
 }

@@ -9,7 +9,7 @@ const callApi = async <T>(dispatch: Dispatch, method: 'GET' | 'POST', url: strin
 
         const result = await axios.request<T>({
             method, 
-            url,
+            url: APP_PREFIX + url,
             data,
         })
         if ((result.data as any).error) {
