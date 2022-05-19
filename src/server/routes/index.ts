@@ -1,7 +1,7 @@
 import express, { Application } from 'express';
 import path from 'path';
 import { createProxyMiddleware } from 'http-proxy-middleware';
-import authRouter, { verifyUserMiddleware } from './auth';
+import authRouter, { getUserForClient, verifyUserMiddleware } from './auth';
 import experimentsRouter from './experiments';
 import { objectId } from '../utils/models';
 import { get } from '../services/collections';
@@ -19,8 +19,8 @@ export default (app: Application) => {
     const api = express.Router();
     api.use(verifyUserMiddleware);
     api.get('/user', async (req, res) => {
-        const user = get('users', req.userId);
-        return res.json(user);
+        const user = await get('users', req.userId);
+        return res.json(getUserForClient(user));
     });
     api.use('/experiments', experimentsRouter);
     appRouter.use('/admin-api', api);

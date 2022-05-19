@@ -13,6 +13,8 @@ const hashPassword = (password: string, salt?: string) => {
     return { passwordSalt, passwordHash };
 };
 
+export const getUserForClient = (user: User) => omit(user, '_id', 'passwordHash', 'passwordSalt');
+
 const setAuthCookieAndReturnUser = (res: express.Response, user: User) => {
     const token = jwt.sign(
         pick(user, '_id', 'usernmae'),
@@ -22,7 +24,7 @@ const setAuthCookieAndReturnUser = (res: express.Response, user: User) => {
         }
     );
     res.cookie('auth', token, { httpOnly: true, sameSite: true, secure: false }); // TODO - set secure to false onlt in dev env
-    res.json(omit(user, '_id', 'passwordHash', 'passwordSalt'));
+    res.json(getUserForClient(user));
 };
 
 export const setWorkerCookie = (res: express.Response, worker: Worker) => {
