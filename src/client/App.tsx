@@ -34,7 +34,7 @@ const App = () => {
             <Routes>
                 {getRouteComponent('/', <div>Home Page!</div>)}
                 {getRouteComponent('/login', <AuthForm />, true)}
-                {getRouteComponent('/register', <AuthForm register />, true)}
+                {!DISABLE_REGISTRATION && getRouteComponent('/register', <AuthForm register />, true)}
                 {getRouteComponent('/experiments', <Experiments />)}
             </Routes>
         </Content>

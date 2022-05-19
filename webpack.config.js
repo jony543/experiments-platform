@@ -48,6 +48,7 @@ module.exports = {
         new HtmlWebpackPlugin({template: './src/client/index.html'}),
         new webpack.DefinePlugin({
             APP_PREFIX: JSON.stringify(process.env.APP_PREFIX || ''),
+            DISABLE_REGISTRATION: JSON.stringify(process.env.DISABLE_REGISTRATION || false),
         }),
     ],
 }

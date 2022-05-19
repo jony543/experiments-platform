@@ -1,6 +1,7 @@
 declare global {
     var BASE_PATH: string;
     var APP_PREFIX: string;
+    var DISABLE_REGISTRATION: any;
 }
 window.BASE_PATH = '/admin';
 import React from 'react';

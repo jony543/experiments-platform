@@ -81,14 +81,16 @@ authRouter.post('/login', async (req, res) => {
     return setAuthCookieAndReturnUser(res, user);
 });
 
-authRouter.post('/register', async (req, res) => {
-    const { username, password } = req.body as AuthParams;
-    let user = await findOne('users',{ username });
-    if (user)
-        throw new Error('username_exits');
-    const { passwordSalt, passwordHash } = hashPassword(password);
-    user = await insertOne('users', { username, passwordHash, passwordSalt } as User);
-    return setAuthCookieAndReturnUser(res, user);
-});
+if (!process.env.DISABLE_REGISTRATION) {
+    authRouter.post('/register', async (req, res) => {
+        const { username, password } = req.body as AuthParams;
+        let user = await findOne('users',{ username });
+        if (user)
+            throw new Error('username_exits');
+        const { passwordSalt, passwordHash } = hashPassword(password);
+        user = await insertOne('users', { username, passwordHash, passwordSalt } as User);
+        return setAuthCookieAndReturnUser(res, user);
+    });
+}
 
 export default authRouter;

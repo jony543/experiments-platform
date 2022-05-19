@@ -45,7 +45,7 @@ const AuthForm = ({ register }: { register?: boolean }) => {
                 {register ? 'Register' : 'Login'}
             </Button>
         </Form.Item>
-        <Link to={getClientRoute(register ? '/login' : '/register')}>{register ? 'login' : 'register'}</Link>
+        {!DISABLE_REGISTRATION && <Link to={getClientRoute(register ? '/login' : '/register')}>{register ? 'login' : 'register'}</Link>}
     </Form>
 }
 
