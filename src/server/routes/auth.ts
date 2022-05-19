@@ -1,5 +1,5 @@
 import express from "express";
-import { findOne, insertOne } from "../services/collections";
+import { findOne, getCollection, insertOne } from "../services/collections";
 import { randomBytes, pbkdf2Sync } from 'crypto';
 import { Collection } from "mongodb";
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
@@ -25,8 +25,19 @@ const setAuthCookieAndReturnUser = (res: express.Response, user: User) => {
     res.json(omit(user, '_id', 'passwordHash', 'passwordSalt'));
 };
 
-export const verifyMiddleware = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    const decoded = verifyAuthCookie(req);
+export const setWorkerCookie = (res: express.Response, worker: Worker) => {
+    const token = jwt.sign(
+        pick(worker, '_id', 'name'),
+        process.env.SECRET_KEY,
+        {
+            expiresIn: "2h",
+        }
+    );
+    res.cookie('worker', token, { httpOnly: true, sameSite: true, secure: false }); // TODO - set secure to false onlt in dev env
+}
+
+export const verifyUserMiddleware = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const decoded = verifyAuthCookie('auth', req);
     if (decoded) {
        req.userId = decoded['_id'];
        next();
@@ -35,9 +46,17 @@ export const verifyMiddleware = async (req: express.Request, res: express.Respon
     }
 }
 
-export const verifyAuthCookie = (req: express.Request) => {
+export const verifyWorkerMiddleware = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const decoded = verifyAuthCookie('worker', req);
+    if (decoded) {
+       req.workerId = decoded['_id'];
+    }
+    next();
+}
+
+export const verifyAuthCookie = (cookieName: string, req: express.Request) => {
     try {
-        const {auth: token} = req.cookies || {};
+        const {[cookieName]: token} = req.cookies || {};
         return token && jwt.verify(token, process.env.SECRET_KEY)
     } catch (err) {
         if (err instanceof TokenExpiredError) {
@@ -68,7 +87,7 @@ authRouter.post('/register', async (req, res) => {
     if (user)
         throw new Error('username_exits');
     const { passwordSalt, passwordHash } = hashPassword(password);
-    user = await insertOne('users', { username, passwordHash, passwordSalt });
+    user = await insertOne('users', { username, passwordHash, passwordSalt } as User);
     return setAuthCookieAndReturnUser(res, user);
 });
 

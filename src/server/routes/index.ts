@@ -1,11 +1,12 @@
 import express, { Application } from 'express';
 import path from 'path';
 import { createProxyMiddleware } from 'http-proxy-middleware';
-import authRouter, { verifyMiddleware } from './auth';
+import authRouter, { verifyUserMiddleware } from './auth';
 import experimentsRouter from './experiments';
 import { objectId } from '../utils/models';
 import { get } from '../services/collections';
 import garminRouter from './garmin';
+import workersApi from './workers';
 
 export default (app: Application) => {
     app.get('/', (req, res) => {
@@ -15,13 +16,15 @@ export default (app: Application) => {
     app.use('/auth', authRouter);
 
     const api = express.Router();
-    api.use(verifyMiddleware);
+    api.use(verifyUserMiddleware);
     api.get('/user', async (req, res) => {
         const user = get('users', req.userId);
         return res.json(user);
     });
     api.use('/experiments', experimentsRouter);
     app.use('/admin-api', api);
+
+    app.use('/workers-api', workersApi)
 
     const publicRoutes = express.Router();
     publicRoutes.use('/garmin', garminRouter);

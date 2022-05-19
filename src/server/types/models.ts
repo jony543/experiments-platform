@@ -15,3 +15,12 @@ export interface Experiment extends BaseModel {
     user: ObjectId;
     git: string;
 }
+
+export interface Worker extends BaseModel {
+    name: string;
+    key: string;
+}
+
+export interface Session extends BaseModel {
+    subId: ObjectId;
+}
