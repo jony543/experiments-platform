@@ -24,7 +24,7 @@ workersApi.post('/sessions', async (req, res) => {
     const session = req.body as Session;
     if (session?._id) {
         await updateOne('sessions', session._id, session);
-        const result = get('sessions', session._id);
+        const result = await get('sessions', session._id);
         res.json(result);
     } else {
         const result = await insertOne('sessions', {...session, subId: objectId(req.workerId) });
