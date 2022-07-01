@@ -7,18 +7,18 @@ import { setWorkerCookie, verifyWorkerMiddleware } from "./auth";
 
 const workersApi = express.Router();
 workersApi.use(verifyWorkerMiddleware)
-workersApi.use(async (req, res, next) => {
-    if (req.workerId)
-        next();
-    const key = req.query.key as string;
-    const worker = await findOne('workers', {key});
-    if (!worker) {
-        return res.status(401).send();
-    }
-    req.workerId = idString(worker._id);
-    setWorkerCookie(res, worker);
-    next();
-});
+// workersApi.use(async (req, res, next) => {
+//     if (req.workerId)
+//         next();
+//     const key = req.query.key as string;
+//     const worker = await findOne('workers', {key});
+//     if (!worker) {
+//         return res.status(401).send();
+//     }
+//     req.workerId = idString(worker._id);
+//     setWorkerCookie(res, worker);
+//     next();
+// });
 
 workersApi.post('/sessions', async (req, res) => {
     const session = req.body as Session;

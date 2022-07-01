@@ -1,11 +1,11 @@
+import { pbkdf2Sync, randomBytes } from 'crypto';
 import express from "express";
-import { findOne, getCollection, insertOne } from "../services/collections";
-import { randomBytes, pbkdf2Sync } from 'crypto';
-import { Collection } from "mongodb";
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
 import { omit, pick } from 'lodash';
-import { User } from "../types/models";
+import { findOne, insertOne } from "../services/collections";
 import { AuthParams } from "../types/api";
+import { User, Worker } from "../types/models";
+import { idString } from "../utils/shared";
 
 const hashPassword = (password: string, salt?: string) => {
     const passwordSalt = salt || randomBytes(16).toString('hex');
@@ -29,7 +29,7 @@ const setAuthCookieAndReturnUser = (res: express.Response, user: User) => {
 
 export const setWorkerCookie = (res: express.Response, worker: Worker) => {
     const token = jwt.sign(
-        pick(worker, '_id', 'name'),
+        pick(worker, '_id', 'name', 'experiment'),
         process.env.SECRET_KEY,
         {
             expiresIn: "2h",
@@ -48,10 +48,23 @@ export const verifyUserMiddleware = async (req: express.Request, res: express.Re
     }
 }
 
+const setWorkerProps = (req: express.Request, worker: Pick<Worker, '_id' | 'experiment'>) => {
+    req.workerId = idString(worker._id);
+    req.workerExperimentId =  idString(worker.experiment);
+}
+
 export const verifyWorkerMiddleware = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const decoded = verifyAuthCookie('worker', req);
     if (decoded) {
-       req.workerId = decoded['_id'];
+        setWorkerProps(req, decoded as Worker);
+    } else {
+        const key = req.query.key as string;
+        const worker = await findOne('workers', {key});
+        if (!worker) {
+            return res.status(401).send();
+        }
+        setWorkerProps(req, worker);
+        setWorkerCookie(res, worker);
     }
     next();
 }

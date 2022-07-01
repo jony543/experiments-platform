@@ -19,6 +19,7 @@ export interface Experiment extends BaseModel {
 export interface Worker extends BaseModel {
     name: string;
     key: string;
+    experiment: ObjectId;
 }
 
 export interface Session extends BaseModel {
