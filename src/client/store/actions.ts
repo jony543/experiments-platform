@@ -58,4 +58,5 @@ export const editExperiment = (editData: Partial<Experiment>) => async (dispatch
         type: ActionType.EDIT_EXPERIMENT,
         experiment,
     } as EditExperimentAction);
+    fetchExperiments()(dispatch);
 }

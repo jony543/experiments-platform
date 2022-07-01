@@ -25,7 +25,7 @@ export default (app: Application) => {
     api.use('/experiments', experimentsRouter);
     appRouter.use('/admin-api', api);
 
-    appRouter.use('/workers-api', workersApi)
+    appRouter.use('/workers-api', workersApi);
 
     const publicRoutes = express.Router();
     publicRoutes.use('/garmin', garminRouter);

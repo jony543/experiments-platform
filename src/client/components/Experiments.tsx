@@ -1,6 +1,6 @@
-import { Button, Collapse, Form, Input } from "antd";
+import { Button, Collapse, Form, FormInstance, Input } from "antd";
 import CollapsePanel from "antd/lib/collapse/CollapsePanel";
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { modelId } from "../../server/utils/shared";
 import { Experiment } from "../../server/types/models";
 import { editExperiment, fetchExperiments } from "../store/actions";
@@ -11,11 +11,8 @@ import { useSelector } from "react-redux";
 const Experiment = ({experiment} : {experiment: Partial<Experiment>}) => {
     const dispatch = useStoreDispatch();
     const isCreate = !modelId(experiment as Experiment);
-
     const onFinish = (changes: Partial<Experiment>) => {
         dispatch(editExperiment({...experiment, ...changes}));
-        if (isCreate)
-            dispatch(fetchExperiments());
     };
     const onFinishFailed = (errorInfo: any) => {
         console.log('experiment form failed:', errorInfo);
@@ -47,11 +44,14 @@ const Experiments = () => {
     const dispatch = useStoreDispatch();
     const experiments = useSelector(getExperiments);
     useEffect(() => {dispatch(fetchExperiments())}, []);
+    const NewExpPanel = useMemo(() =>
+        <CollapsePanel header="Create a New Experiment" key={'new-' + new Date().getTime()} ><Experiment experiment={{}} /></CollapsePanel>,
+        [experiments]);
     return <div>
         <h2>Experiments/Apps management</h2>
         <Collapse>
             {experiments?.map(exp => <CollapsePanel header={exp.name} key={modelId(exp)}><Experiment experiment={exp} /></CollapsePanel>)}
-            <CollapsePanel header="New Experiment" key="new"><Experiment experiment={{}} /></CollapsePanel>
+            {NewExpPanel}
         </Collapse>
     </div>
 }

@@ -20,6 +20,7 @@ experimentsRouter.post('/', async (req, res) => {
         updateOne('experiments', experiment._id, update);
         Object.assign(result, update);
         const pullResult = await simpleGit(`${process.env.STUDY_ASSETS_FOLDER}/${experiment.name}`).pull();
+        console.log({pullResult});
     }
     else {
         const cloneResult = await new Promise(res => simpleGit().clone(
@@ -27,6 +28,7 @@ experimentsRouter.post('/', async (req, res) => {
             `${process.env.STUDY_ASSETS_FOLDER}/${experiment.name}`, 
             {}, 
             (err, data) => res({err, data})));
+        console.log({cloneResult});
         experiment.user = objectId(req.userId);
         result = await insertOne('experiments', experiment);
     }
