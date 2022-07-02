@@ -7,10 +7,13 @@ import { editExperiment, fetchExperiments } from "../store/actions";
 import { useStoreDispatch } from "../store/store";
 import { getExperiments } from "../store/selectors";
 import { useSelector } from "react-redux";
+import { getClientRoute } from "../App";
+import { Link } from "react-router-dom";
 
 const Experiment = ({experiment} : {experiment: Partial<Experiment>}) => {
     const dispatch = useStoreDispatch();
-    const isCreate = !modelId(experiment as Experiment);
+    const experimentId = modelId(experiment as Experiment);
+    const isCreate = !experimentId;
     const onFinish = (changes: Partial<Experiment>) => {
         dispatch(editExperiment({...experiment, ...changes}));
     };
@@ -37,6 +40,7 @@ const Experiment = ({experiment} : {experiment: Partial<Experiment>}) => {
         </Form.Item>
         <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
             <Button type="primary" htmlType="submit">{isCreate ? 'Create' : 'Update'}</Button>
+            <Link style={{marginLeft: '10px'}} to={getClientRoute(`/experiments/${experimentId}/workers`)}>Manage workers</Link>
         </Form.Item>
     </Form>
 }
@@ -48,7 +52,7 @@ const Experiments = () => {
         <CollapsePanel header="Create a New Experiment" key={'new-' + new Date().getTime()} ><Experiment experiment={{}} /></CollapsePanel>,
         [experiments]);
     return <div>
-        <h2>Experiments/Apps management</h2>
+        <h2>Experiments/Apps Management</h2>
         <Collapse>
             {experiments?.map(exp => <CollapsePanel header={exp.name} key={modelId(exp)}><Experiment experiment={exp} /></CollapsePanel>)}
             {NewExpPanel}

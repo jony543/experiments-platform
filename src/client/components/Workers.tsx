@@ -58,9 +58,12 @@ const Workers = () => {
         {dataIndex: '_id', title: 'WorkerId'},
         {dataIndex: 'name', title: 'Name'},
         {dataIndex: 'experiment', title: 'Experiment', render: (val: string) => experiments?.[val]?.name},
-        {dataIndex: 'key', title: 'Key', render: (val) => <div style={{width: '150px', display: 'flex', marginRight: '-50px'}}>
-            <Typography.Text ellipsis={true}>{val}</Typography.Text><CopyToClipboard value={val} />
-        </div>},
+        {dataIndex: 'key', title: 'Link', render: (val) => {
+            const link = `${location.origin}${APP_PREFIX}/public/experiment/${experiment?.name}?key=${val}`;
+            return <div style={{width: '150px', display: 'flex', marginRight: '-50px'}}>
+                <Typography.Text ellipsis={true}>{link}</Typography.Text><CopyToClipboard value={link} />
+            </div>;
+        }},
         {render: (value: any, record: Worker) => <Button type="link" onClick={() => setEditing(record)}>Edit</Button>}
     ], [experiments]);
     const EditPanel = useMemo(() => {
@@ -74,6 +77,7 @@ const Workers = () => {
         },
         [workers, editing]);
     return <>
+        <h2>Workers Management{experiment ? ` - ${experiment.name}` : ''}</h2>
         {EditPanel}
         <Table dataSource={workers} columns={columns} />
     </>

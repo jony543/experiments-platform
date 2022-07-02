@@ -58,14 +58,14 @@ const App = () => {
         </Header>
         <Content>
             <Routes>
-                {getRouteComponent('/', <div>Home Page!</div>)}
+                {getRouteComponent('/', <div>Welcome to experiments platform v2!</div>)}
                 {getRouteComponent('/login', <AuthForm />, true)}
                 {!DISABLE_REGISTRATION && getRouteComponent('/register', <AuthForm register />, true)}
                 {getRouteComponent('/experiments', <Experiments />)}
                 {getRouteComponent('/experiments/:experimentId/workers', <Workers />)}
             </Routes>
         </Content>
-        <Footer>Footer</Footer>
+        <Footer></Footer>
     </Layout>;
 };
 
