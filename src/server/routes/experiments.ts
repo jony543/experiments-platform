@@ -1,15 +1,28 @@
 import express from 'express';
 import { omit } from 'lodash';
 import simpleGit from 'simple-git';
-import { find, get, insertOne, updateOne } from '../services/collections';
+import { deleteOne, find, get, insertOne, updateOne } from '../services/collections';
 import { Experiment, Worker } from '../types/models';
 import { objectId } from '../utils/models';
 import { hashPassword } from './auth';
+import { rmSync } from 'fs';
 
 const experimentsRouter = express.Router();
 experimentsRouter.get('/', async (req, res) => {
     const experiments = await find('experiments', {}); // TODO - show only user relevant experiments
     res.json(experiments);
+});
+experimentsRouter.delete('/:id', async (req, res) => {
+    const experiment = await get('experiments', req.params.id);
+    console.log('delte exp', {experiment});
+    if (!experiment) // TODO - validate access
+        res.status(400);
+    const workers = await find('workers', {experiment: objectId(req.params.id)});
+    if (workers?.length > 0)
+        res.status(400).send(`can't delete experiment with workers`);
+    rmSync(`${process.env.STUDY_ASSETS_FOLDER}/${experiment.name}`, { recursive: true, force: true });
+    await deleteOne('experiments', req.params.id);
+    res.status(200).send();
 });
 experimentsRouter.post('/', async (req, res) => {
     const experiment = req.body as Experiment;

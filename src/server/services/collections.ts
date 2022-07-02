@@ -28,11 +28,17 @@ export const findOne = <T extends CollectionName>(collectionName: T, filter: Fil
 export const get = <T extends CollectionName>(collectionName: T, id: string | ObjectId) => 
     findOne(collectionName, { _id: objectId(id) as any });
 
+// TODO - createdAt
 export const insertOne = async <T extends CollectionName>(collectionName: T, item: OptionalUnlessRequiredId<CollectionModel<T>>) => {
     const {insertedId} = await getCollection<CollectionModel<T>>(collectionName).insertOne(item);
     return await get(collectionName, insertedId);
 };
+
+// TODO - updatedAt
 export const updateOne = async <T extends CollectionName>(collectionName: T, id: string | ObjectId, update: Partial<CollectionModel<T>>) =>
     getCollection<CollectionModel<T>>(collectionName).updateOne(
         {_id: objectId(id) as any}, 
         {$set: omit(update, '_id') as Partial<CollectionModel<T>>});
+
+export const deleteOne = <T extends CollectionName>(collectionName: T, id: string | ObjectId) => 
+    getCollection(collectionName).deleteOne({_id: objectId(id)});

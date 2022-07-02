@@ -4,7 +4,7 @@ import { AuthParams } from '../../server/types/api';
 import { Experiment, User, Worker } from '../../server/types/models';
 import { ActionType, EditExperimentAction, SetExperimentsAction, SetUserAction, SetWorkersAction } from "./types";
 
-const callApi = async <T>(dispatch: Dispatch, method: 'GET' | 'POST', url: string, data?: any) => {
+const callApi = async <T>(dispatch: Dispatch, method: 'GET' | 'POST' | 'DELETE', url: string, data?: any) => {
     try {
 
         const result = await axios.request<T>({
@@ -58,6 +58,11 @@ export const editExperiment = (editData: Partial<Experiment>) => async (dispatch
         type: ActionType.EDIT_EXPERIMENT,
         experiment,
     } as EditExperimentAction);
+    fetchExperiments()(dispatch);
+}
+
+export const deleteExperiment = (experimentId: string) => async (dispatch: Dispatch) => {
+    await callApi<Experiment>(dispatch, 'DELETE', `/admin-api/experiments/${experimentId}`);
     fetchExperiments()(dispatch);
 }
 

@@ -1,24 +1,29 @@
-import { Button, Collapse, Form, FormInstance, Input } from "antd";
+import { Button, Collapse, Form, Input, Popover } from "antd";
 import CollapsePanel from "antd/lib/collapse/CollapsePanel";
-import React, { useEffect, useMemo } from "react";
-import { modelId } from "../../server/utils/shared";
-import { Experiment } from "../../server/types/models";
-import { editExperiment, fetchExperiments } from "../store/actions";
-import { useStoreDispatch } from "../store/store";
-import { getExperiments } from "../store/selectors";
+import React, { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
-import { getClientRoute } from "../App";
 import { Link } from "react-router-dom";
+import { Experiment } from "../../server/types/models";
+import { modelId } from "../../server/utils/shared";
+import { getClientRoute } from "../App";
+import { deleteExperiment, editExperiment, fetchExperiments } from "../store/actions";
+import { getExperiments } from "../store/selectors";
+import { useStoreDispatch } from "../store/store";
 
-const Experiment = ({experiment} : {experiment: Partial<Experiment>}) => {
+const Experiment = ({ experiment }: { experiment: Partial<Experiment> }) => {
     const dispatch = useStoreDispatch();
     const experimentId = modelId(experiment as Experiment);
     const isCreate = !experimentId;
+    const [deleteConfirmation, setDelteConfirmation] = useState(false);
     const onFinish = (changes: Partial<Experiment>) => {
-        dispatch(editExperiment({...experiment, ...changes}));
+        dispatch(editExperiment({ ...experiment, ...changes }));
     };
     const onFinishFailed = (errorInfo: any) => {
         console.log('experiment form failed:', errorInfo);
+    };
+    const deleteExperimentConfirmed = () => {
+        dispatch(deleteExperiment(experimentId));
+        setDelteConfirmation(false);
     };
     return <Form name="experiment"
         labelCol={{ span: 8 }}
@@ -40,14 +45,23 @@ const Experiment = ({experiment} : {experiment: Partial<Experiment>}) => {
         </Form.Item>
         <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
             <Button type="primary" htmlType="submit">{isCreate ? 'Create' : 'Update'}</Button>
-            <Link style={{marginLeft: '10px'}} to={getClientRoute(`/experiments/${experimentId}/workers`)}>Manage workers</Link>
+            <Link style={{ marginLeft: '10px' }} to={getClientRoute(`/experiments/${experimentId}/workers`)}>Manage workers</Link>
+            {!isCreate && <Popover title="Are you sure?" trigger="click" visible={deleteConfirmation} onVisibleChange={v => setDelteConfirmation(v)} content={<div>
+                <p>This action is not reversible!</p>
+                <div style={{ display: 'flex' }}>
+                    <Button type="primary" size="small" onClick={deleteExperimentConfirmed}>Yes, delete</Button>
+                    <Button size="small" style={{ marginLeft: '10px' }} onClick={() => setDelteConfirmation(false)}>Cancel</Button>
+                </div>
+            </div>}>
+                <Button type="link">Delete</Button>
+            </Popover>}
         </Form.Item>
     </Form>
 }
 const Experiments = () => {
     const dispatch = useStoreDispatch();
     const experiments = useSelector(getExperiments);
-    useEffect(() => {dispatch(fetchExperiments())}, []);
+    useEffect(() => { dispatch(fetchExperiments()) }, []);
     const NewExpPanel = useMemo(() =>
         <CollapsePanel header="Create a New Experiment" key={'new-' + new Date().getTime()} ><Experiment experiment={{}} /></CollapsePanel>,
         [experiments]);
