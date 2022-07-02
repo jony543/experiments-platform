@@ -32,7 +32,6 @@ export default (app: Application) => {
     publicRoutes.use('/experiment',
         verifyWorkerMiddleware,
         async (req, res, next) => {
-            console.log('verifying experiment access', req.url);    
             const experimentName = new URL(req.url, 'http://dummy').pathname.split('/').find(Boolean);
             const experiment = await findOne('experiments', {name: experimentName}); // TODO - cache
             if (req.workerExperimentId !== modelId(experiment))

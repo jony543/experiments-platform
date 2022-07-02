@@ -1,8 +1,8 @@
 import axios, { AxiosRequestConfig } from "axios"
 import { Dispatch } from "redux";
 import { AuthParams } from '../../server/types/api';
-import { Experiment, User } from '../../server/types/models';
-import { ActionType, EditExperimentAction, SetExperimentsAction, SetUserAction } from "./types";
+import { Experiment, User, Worker } from '../../server/types/models';
+import { ActionType, EditExperimentAction, SetExperimentsAction, SetUserAction, SetWorkersAction } from "./types";
 
 const callApi = async <T>(dispatch: Dispatch, method: 'GET' | 'POST', url: string, data?: any) => {
     try {
@@ -59,4 +59,18 @@ export const editExperiment = (editData: Partial<Experiment>) => async (dispatch
         experiment,
     } as EditExperimentAction);
     fetchExperiments()(dispatch);
+}
+
+export const fetchWorkers = (experimentId: string) => async (dispatch: Dispatch) => {
+    const workers = await callApi<Worker[]>(dispatch, 'GET', `/admin-api/experiments/${experimentId}/workers`);
+    dispatch({
+        type: ActionType.SET_WORKERS,
+        workers,
+        experimentId,
+    } as SetWorkersAction);
+}
+
+export const editWorker = (experimentId: string, editDate: Partial<Worker>) => async (dispatch: Dispatch) => {
+    const workers = await callApi<Worker[]>(dispatch, 'POST', `/admin-api/experiments/${experimentId}/workers`, editDate);
+    fetchWorkers(experimentId)(dispatch);
 }

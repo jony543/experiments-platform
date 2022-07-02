@@ -1,24 +1,24 @@
 import express from 'express';
 import { omit } from 'lodash';
-import simpleGit, { SimpleGit, CleanOptions } from 'simple-git';
+import simpleGit from 'simple-git';
 import { find, get, insertOne, updateOne } from '../services/collections';
-import { Experiment } from '../types/models';
+import { Experiment, Worker } from '../types/models';
 import { objectId } from '../utils/models';
+import { hashPassword } from './auth';
 
 const experimentsRouter = express.Router();
 experimentsRouter.get('/', async (req, res) => {
-    const experiments = await find('experiments', {});
+    const experiments = await find('experiments', {}); // TODO - show only user relevant experiments
     res.json(experiments);
 });
 experimentsRouter.post('/', async (req, res) => {
     const experiment = req.body as Experiment;
-    console.log({experiment});
     let result = experiment._id && await get('experiments', experiment._id);
     if (result) {
-        // dont allow editing of experiment name and git repo
-        const update = omit(experiment, 'name','git');
-        updateOne('experiments', experiment._id, update);
-        Object.assign(result, update);
+        // no need to update anything yet - just pull repo
+        // const update = omit(experiment,'_id', 'name','git','user');
+        // updateOne('experiments', experiment._id, update);
+        // Object.assign(result, update);
         const pullResult = await simpleGit(`${process.env.STUDY_ASSETS_FOLDER}/${experiment.name}`).pull();
         console.log({pullResult});
     }
@@ -31,6 +31,27 @@ experimentsRouter.post('/', async (req, res) => {
         console.log({cloneResult});
         experiment.user = objectId(req.userId);
         result = await insertOne('experiments', experiment);
+    }
+    res.json(result);
+});
+experimentsRouter.get('/:id/workers', async (req, res) => {
+    const workers = await find('workers', {experiment: objectId(req.params.id)});
+    res.json(workers);
+});
+experimentsRouter.post('/:id/workers', async (req, res) => {
+    const worker = req.body as Worker;
+    const experiment = await get('experiments', req.params.id); // TODO: validate user access to experiment
+    if (!experiment)
+        return res.status(400);
+    let result = worker._id && await get('workers', worker._id);
+    if (result) {
+        if (!objectId(worker.experiment).equals(experiment._id))
+            return res.status(400);
+        const update = omit(worker, '_id', 'experiment');;
+        await updateOne('workers', result._id, update);
+        Object.assign(result, update);
+    } else {
+        result = await insertOne('workers', {...worker, experiment: experiment._id, key: hashPassword(`${worker.name}`).passwordHash});
     }
     res.json(result);
 });

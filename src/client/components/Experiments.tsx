@@ -17,7 +17,7 @@ const Experiment = ({experiment} : {experiment: Partial<Experiment>}) => {
     const onFinishFailed = (errorInfo: any) => {
         console.log('experiment form failed:', errorInfo);
     };
-    return <Form name="login"
+    return <Form name="experiment"
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 16 }}
         initialValues={experiment}
@@ -27,14 +27,14 @@ const Experiment = ({experiment} : {experiment: Partial<Experiment>}) => {
             label="Name"
             name="name"
             rules={[{ required: true, message: 'Please input a unique experiment name' }]}>
-            <Input />
+            <Input disabled={!isCreate} />
         </Form.Item>
-        {isCreate && <Form.Item
+        <Form.Item
             label="Repository"
             name="git"
             rules={[{ required: true, message: 'Please input a git repository connection string' }]}>
-            <Input />
-        </Form.Item>}
+            <Input disabled={!isCreate} />
+        </Form.Item>
         <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
             <Button type="primary" htmlType="submit">{isCreate ? 'Create' : 'Update'}</Button>
         </Form.Item>

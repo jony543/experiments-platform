@@ -7,7 +7,7 @@ import { AuthParams } from "../types/api";
 import { User, Worker } from "../types/models";
 import { idString } from "../utils/shared";
 
-const hashPassword = (password: string, salt?: string) => {
+export const hashPassword = (password: string, salt?: string) => {
     const passwordSalt = salt || randomBytes(16).toString('hex');
     const passwordHash = pbkdf2Sync(password, passwordSalt, 1000, 64, `sha512`).toString(`hex`);
     return { passwordSalt, passwordHash };
@@ -59,12 +59,12 @@ export const verifyWorkerMiddleware = async (req: express.Request, res: express.
         setWorkerProps(req, decoded as Worker);
     } else {
         const key = req.query.key as string;
-        const worker = await findOne('workers', {key});
+        const worker = key && await findOne('workers', {key});
         if (!worker) {
             return res.status(401).send();
         }
         setWorkerProps(req, worker);
-        setWorkerCookie(res, worker);
+        setWorkerCookie(res, worker); // TODO - set cookie only in browser context (check user agent maybe)
     }
     next();
 }

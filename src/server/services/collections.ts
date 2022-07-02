@@ -1,6 +1,6 @@
 import { omit } from "lodash";
-import { Db, Filter, MongoClient, ObjectId, OptionalId, OptionalUnlessRequiredId, WithId } from "mongodb";
-import { BaseModel, Experiment, Session, User } from "../types/models";
+import { Db, Filter, MongoClient, ObjectId, OptionalUnlessRequiredId } from "mongodb";
+import { BaseModel, Experiment, Session, User, Worker } from "../types/models";
 import { objectId } from "../utils/models";
 
 let client: MongoClient;
@@ -21,10 +21,13 @@ type CollectionModel<T extends CollectionName> =
 
 export const find = <T extends CollectionName>(collectionName: T, filter: Filter<CollectionModel<T>>) =>
     getCollection<CollectionModel<T>>(collectionName).find(filter).toArray();
+    
 export const findOne = <T extends CollectionName>(collectionName: T, filter: Filter<CollectionModel<T>>) =>
     getCollection<CollectionModel<T>>(collectionName).findOne(filter);
+
 export const get = <T extends CollectionName>(collectionName: T, id: string | ObjectId) => 
     findOne(collectionName, { _id: objectId(id) as any });
+
 export const insertOne = async <T extends CollectionName>(collectionName: T, item: OptionalUnlessRequiredId<CollectionModel<T>>) => {
     const {insertedId} = await getCollection<CollectionModel<T>>(collectionName).insertOne(item);
     return await get(collectionName, insertedId);
