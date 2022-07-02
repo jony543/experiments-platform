@@ -1,6 +1,7 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-require('dotenv').config({ path: './.env' }); 
+const CopyPlugin = require("copy-webpack-plugin");
+require('dotenv').config({ path: './.env' });
 const webpack = require('webpack');
 
 const appBase = `${process.env.APP_PREFIX || ''}/admin`
@@ -45,10 +46,15 @@ module.exports = {
         ],
     },
     plugins: [
-        new HtmlWebpackPlugin({template: './src/client/index.html'}),
+        new HtmlWebpackPlugin({ template: './src/client/index.html' }),
         new webpack.DefinePlugin({
             APP_PREFIX: JSON.stringify(process.env.APP_PREFIX || ''),
             DISABLE_REGISTRATION: JSON.stringify(process.env.DISABLE_REGISTRATION || false),
+        }),
+        new CopyPlugin({
+            patterns: [
+                { from: "./src/client/assets", to: "assets" },
+            ],
         }),
     ],
 }

@@ -8,7 +8,7 @@ import { useParams } from 'react-router-dom';
 import { Worker } from '../../server/types/models';
 import { modelId } from '../../server/utils/shared';
 import { editWorker, fetchExperiments, fetchWorkers } from '../store/actions';
-import { getExperiments, getExperimentsDict, getWorkers } from '../store/selectors';
+import { getExperimentsDict, getWorkers } from '../store/selectors';
 import { useStoreDispatch } from '../store/store';
 import CopyToClipboard from './CopyToClipboard';
 
