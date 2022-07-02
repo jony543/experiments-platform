@@ -31,12 +31,18 @@ export default (app: Application) => {
     publicRoutes.use('/garmin', garminRouter);
     publicRoutes.use('/experiment',
         verifyWorkerMiddleware,
-        async (req, res, next) => {
+        async (req, res, next) => { // verify worker experiment
             const experimentName = new URL(req.url, 'http://dummy').pathname.split('/').find(Boolean);
             const experiment = await findOne('experiments', {name: experimentName}); // TODO - cache
             if (req.workerExperimentId !== modelId(experiment))
                 return res.status(401).send();
             next();
+        },
+        async (req, res, next) => {
+            if (req.url.includes('experiments-platform.js'))
+                res.sendFile(path.resolve(__dirname, '../../client/experiments-platform.js'));
+            else
+                next();
         },
         express.static(process.env.STUDY_ASSETS_FOLDER));
     appRouter.use('/public', publicRoutes);

@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig } from "axios"
+import axios from "axios";
 import { Dispatch } from "redux";
 import { AuthParams } from '../../server/types/api';
 import { Experiment, User, Worker } from '../../server/types/models';

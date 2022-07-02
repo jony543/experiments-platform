@@ -13,7 +13,10 @@ module.exports = {
             index: appBase,
         }
     },
-    entry: './src/client/index.tsx',
+    entry: {
+        main: './src/client/index.tsx',
+        'experiments-platform': './src/server/utils/experimentsHelper.ts',
+    },
     output: {
         path: path.join(__dirname, '/dist/client'),
         publicPath: appBase,
@@ -46,7 +49,7 @@ module.exports = {
         ],
     },
     plugins: [
-        new HtmlWebpackPlugin({ template: './src/client/index.html' }),
+        new HtmlWebpackPlugin({ template: './src/client/index.html', excludeChunks: ['experiments-platform'] }),
         new webpack.DefinePlugin({
             APP_PREFIX: JSON.stringify(process.env.APP_PREFIX || ''),
             DISABLE_REGISTRATION: JSON.stringify(process.env.DISABLE_REGISTRATION || false),
