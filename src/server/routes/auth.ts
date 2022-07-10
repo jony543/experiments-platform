@@ -2,9 +2,10 @@ import { pbkdf2Sync, randomBytes } from 'crypto';
 import express from "express";
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
 import { omit, pick } from 'lodash';
-import { findOne, insertOne } from "../services/collections";
+import { findOne, get, insertOne, updateOne } from "../services/collections";
 import { AuthParams } from "../types/api";
 import { User, Worker } from "../types/models";
+import { DISABLE_REGISTRATION } from '../utils/constants';
 import { idString } from "../utils/shared";
 
 export const hashPassword = (password: string, salt?: string) => {
@@ -17,7 +18,7 @@ export const getUserForClient = (user: User) => omit(user, '_id', 'passwordHash'
 
 const setAuthCookieAndReturnUser = (res: express.Response, user: User) => {
     const token = jwt.sign(
-        pick(user, '_id', 'usernmae'),
+        pick(user, '_id', 'username', 'role'),
         process.env.SECRET_KEY,
         {
             expiresIn: "2h",
@@ -42,6 +43,7 @@ export const verifyUserMiddleware = async (req: express.Request, res: express.Re
     const decoded = verifyAuthCookie('auth', req);
     if (decoded) {
        req.userId = decoded['_id'];
+       req.userRole = decoded['role'];
        next();
     } else {
         return res.status(401).send();
@@ -82,6 +84,12 @@ export const verifyAuthCookie = (cookieName: string, req: express.Request) => {
 }
 
 const authRouter = express.Router();
+
+const validatePassword = (user:User, password: string) => {
+    const { passwordHash } = hashPassword(password, user.passwordSalt);
+    return user.passwordHash === passwordHash;
+};
+
 authRouter.post('/login', async (req, res) => {
     const { username, password } = req.body as AuthParams;
 
@@ -90,13 +98,22 @@ authRouter.post('/login', async (req, res) => {
         await new Promise(res => setTimeout(res, 2941));
         return res.status(401).send();
     }
-    const { passwordHash } = hashPassword(password, user.passwordSalt);
-    if (user.passwordHash != passwordHash)
+    if (!validatePassword(user, password))
         return res.status(401).send();
     return setAuthCookieAndReturnUser(res, user);
 });
 
-if (!process.env.DISABLE_REGISTRATION) {
+authRouter.post('/resetPassword', verifyUserMiddleware, async (req, res) => {
+    const user = await get('users', req.userId);
+    const { password, newPassword } = req.body as AuthParams;
+    if (!validatePassword(user, password))
+        return res.status(400).send();
+    const { passwordSalt, passwordHash } = hashPassword(newPassword);
+    await updateOne('users', user._id, { passwordHash, passwordSalt });
+    return setAuthCookieAndReturnUser(res, user);
+});
+
+if (!DISABLE_REGISTRATION) {
     authRouter.post('/register', async (req, res) => {
         const { username, password } = req.body as AuthParams;
         let user = await findOne('users',{ username });

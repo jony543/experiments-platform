@@ -6,6 +6,9 @@ export const reducer = (state: Store = {workers: {}}, action: StoreAction): Stor
         case ActionType.SET_USER:
             const {user} = action;
             return {...state, user};
+        case ActionType.SET_USERS:
+            const {users} = action;
+            return {...state, users};
         case ActionType.SET_EXPERIMENTS:
             const {experiments} = action;
             return {...state, experiments};

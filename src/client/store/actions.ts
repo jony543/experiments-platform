@@ -2,7 +2,7 @@ import axios from "axios";
 import { Dispatch } from "redux";
 import { AuthParams } from '../../server/types/api';
 import { Experiment, User, Worker } from '../../server/types/models';
-import { ActionType, EditExperimentAction, SetExperimentsAction, SetUserAction, SetWorkersAction } from "./types";
+import { ActionType, EditExperimentAction, SetExperimentsAction, SetUserAction, SetUsersAction, SetWorkersAction } from "./types";
 
 const callApi = async <T>(dispatch: Dispatch, method: 'GET' | 'POST' | 'DELETE', url: string, data?: any) => {
     try {
@@ -26,10 +26,11 @@ const callApi = async <T>(dispatch: Dispatch, method: 'GET' | 'POST' | 'DELETE',
     }
 }
 
-export const authenticate = (username: string, password: string, register?: boolean) => async (dispatch: Dispatch) => {
+export type AuthAction = 'register' | 'login' | 'resetPassword';
+export const authenticate = (username: string, password: string, action: AuthAction, newPassword?: string) => async (dispatch: Dispatch) => {
     const user = await callApi<User>(dispatch, 'POST',
-        `/auth/${register ? 'register' : 'login'}`,
-        { username, password } as AuthParams);
+        `/auth/${action}`,
+        { username, password, newPassword } as AuthParams);
     dispatch({
         type: ActionType.SET_USER,
         user,
@@ -42,6 +43,24 @@ export const fetchUser = () => async (dispatch: Dispatch) => {
         type: ActionType.SET_USER,
         user,
     } as SetUserAction);
+}
+
+export const fetchUsers = () => async (dispatch: Dispatch) => {
+    const users = await callApi<User[]>(dispatch, 'GET', `/admin-api/users`);
+    dispatch({
+        type: ActionType.SET_USERS,
+        users,
+    } as SetUsersAction);
+}
+
+export const createUser = (params: Partial<AuthParams>) => async (dispatch: Dispatch) => {
+    await callApi<Experiment>(dispatch, 'POST', `/admin-api/users`, params);
+    fetchUsers()(dispatch);
+}
+
+export const editUser = (userId:string, params: Partial<AuthParams>) => async (dispatch: Dispatch) => {
+    await callApi<Experiment>(dispatch, 'POST', `/admin-api/users/${userId}`, params);
+    fetchUsers()(dispatch);
 }
 
 export const fetchExperiments = () => async (dispatch: Dispatch) => {

@@ -6,6 +6,7 @@ import { modelId } from '../utils/shared';
 import authRouter, { getUserForClient, verifyUserMiddleware, verifyWorkerMiddleware } from './auth';
 import experimentsRouter from './experiments';
 import garminRouter from './garmin';
+import usersRouter from './users';
 import workersApi from './workers';
 
 export default (app: Application) => {
@@ -23,6 +24,7 @@ export default (app: Application) => {
         return res.json(getUserForClient(user));
     });
     api.use('/experiments', experimentsRouter);
+    api.use('/users', usersRouter);
     appRouter.use('/admin-api', api);
 
     appRouter.use('/workers-api', workersApi);

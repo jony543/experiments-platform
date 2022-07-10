@@ -8,6 +8,7 @@ export interface User extends BaseModel {
     username: string;
     passwordHash: string;
     passwordSalt: string;
+    role?: 'admin';
 }
 
 export interface Experiment extends BaseModel {

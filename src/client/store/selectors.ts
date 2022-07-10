@@ -8,6 +8,7 @@ export const getUser = createSelector(rootSelector, store => store.user);
 const getKeyValueSelector = <S, T>(selector: Selector<S, T[]>, key: keyof T) => 
     createSelector(selector, arr => arr?.reduce<Record<string, T>>((dict, val) => ({...dict, [val[key] as unknown as string]: val}),{}));
 
+export const getUsers = createSelector(rootSelector, store => store.users);
 export const getExperiments = createSelector(rootSelector, store => store.experiments);
 export const getExperimentsDict = getKeyValueSelector(getExperiments, '_id');
 export const getWorkers = (experimentId: string) => createSelector(rootSelector, store => store.workers[experimentId]);

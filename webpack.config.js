@@ -52,7 +52,7 @@ module.exports = {
         new HtmlWebpackPlugin({ template: './src/client/index.html', excludeChunks: ['experiments-platform'] }),
         new webpack.DefinePlugin({
             APP_PREFIX: JSON.stringify(process.env.APP_PREFIX || ''),
-            DISABLE_REGISTRATION: JSON.stringify(process.env.DISABLE_REGISTRATION || false),
+            DISABLE_REGISTRATION: process.env.DISABLE_REGISTRATION || false,
         }),
         new CopyPlugin({
             patterns: [

@@ -1,1 +1,1 @@
-export type AuthParams = {username: string; password: string;};
+export type AuthParams = {username: string; password: string; newPassword?: string;};

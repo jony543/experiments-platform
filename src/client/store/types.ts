@@ -4,10 +4,12 @@ export type Store = {
     user?: User;
     experiments?: Experiment[];
     workers?: Record<string, Worker[]>;
+    users?: User[];
 }
 
 export enum ActionType {
     SET_USER = 'SET_USER',
+    SET_USERS = 'SET_USERS',
     SET_EXPERIMENTS = 'SET_EXPERIMENTS',
     EDIT_EXPERIMENT = 'EDIT_EXPERIMENT',
     SET_WORKERS = 'SET_WORKERS',
@@ -15,6 +17,10 @@ export enum ActionType {
 export type SetUserAction = {
     type: ActionType.SET_USER;
     user: User;
+}
+export type SetUsersAction = {
+    type: ActionType.SET_USERS;
+    users: User[];
 }
 export type SetExperimentsAction = {
     type: ActionType.SET_EXPERIMENTS;
@@ -29,4 +35,4 @@ export type SetWorkersAction = {
     experimentId: string;
     workers: Worker[];
 }
-export type StoreAction = SetUserAction | SetExperimentsAction | EditExperimentAction | SetWorkersAction;
+export type StoreAction = SetUserAction | SetUsersAction | SetExperimentsAction | EditExperimentAction | SetWorkersAction;
