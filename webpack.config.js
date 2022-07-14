@@ -1,21 +1,17 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-require('dotenv').config({ path: './.env' }); 
-const webpack = require('webpack');
-
-const appBase = `${process.env.APP_PREFIX || ''}/admin`
 
 module.exports = {
     devServer: {
         port: 3333,
         historyApiFallback: {
-            index: appBase,
+            index: '/admin',
         }
     },
     entry: './src/client/index.tsx',
     output: {
         path: path.join(__dirname, '/dist/client'),
-        publicPath: appBase,
+        publicPath: '/admin',
     },
     // optimization
     resolve: {
@@ -44,11 +40,5 @@ module.exports = {
             },
         ],
     },
-    plugins: [
-        new HtmlWebpackPlugin({template: './src/client/index.html'}),
-        new webpack.DefinePlugin({
-            APP_PREFIX: JSON.stringify(process.env.APP_PREFIX || ''),
-            DISABLE_REGISTRATION: JSON.stringify(process.env.DISABLE_REGISTRATION || false),
-        }),
-    ],
+    plugins: [new HtmlWebpackPlugin({template: './src/client/index.html'})],
 }
