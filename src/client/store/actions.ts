@@ -31,7 +31,9 @@ const callApi = async <T>(dispatch: Dispatch, method: 'GET' | 'POST' | 'DELETE',
         }
     } catch (err) {
         const status = err?.response?.status;
-        showNotification('error', `${method} ${url}`, status ? 'request completed with status: ' + status : 'request error: ' + err)(dispatch);
+        const content = err?.response?.data;
+        const message = `Error${status ? ` ${status}` : ''}: ${content || err}`;
+        showNotification('error', `${method} ${url}`, message)(dispatch);
         if (status == 401) {
                 dispatch({
                     type: ActionType.SET_USER,

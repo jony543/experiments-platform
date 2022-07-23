@@ -14,9 +14,8 @@ experimentsRouter.get('/', async (req, res) => {
 });
 experimentsRouter.delete('/:id', async (req, res) => {
     const experiment = await get('experiments', req.params.id);
-    console.log('delte exp', {experiment});
     if (!experiment) // TODO - validate access
-        return res.status(400);
+        return res.status(400).send('Experiment does not exist');
     const workers = await find('workers', {experiment: objectId(req.params.id)});
     if (workers?.length > 0)
         return res.status(400).send(`can't delete experiment with workers`);
@@ -55,11 +54,11 @@ experimentsRouter.post('/:id/workers', async (req, res) => {
     const worker = req.body as Worker;
     const experiment = await get('experiments', req.params.id); // TODO: validate user access to experiment
     if (!experiment)
-        return res.status(400);
+        return res.status(400).send('Experiment does not exists');
     let result = worker._id && await get('workers', worker._id);
     if (result) {
         if (!objectId(worker.experiment).equals(experiment._id))
-            return res.status(400);
+            return res.status(400).send('Unexpected expriment field for worker');
         const update = omit(worker, '_id', 'experiment');;
         await updateOne('workers', result._id, update);
         Object.assign(result, update);

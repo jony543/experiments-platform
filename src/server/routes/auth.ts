@@ -96,10 +96,10 @@ authRouter.post('/login', async (req, res) => {
     let user = await findOne('users', {username});
     if (!user) {
         await new Promise(res => setTimeout(res, 2941));
-        return res.status(401).send();
+        return res.status(401).send('Wrong username or password');
     }
     if (!validatePassword(user, password))
-        return res.status(401).send();
+        return res.status(401).send('Wrong username or password');
     return setAuthCookieAndReturnUser(res, user);
 });
 
@@ -107,7 +107,7 @@ authRouter.post('/resetPassword', verifyUserMiddleware, async (req, res) => {
     const user = await get('users', req.userId);
     const { password, newPassword } = req.body as AuthParams;
     if (!validatePassword(user, password))
-        return res.status(400).send();
+        return res.status(400).send('Wrong password');
     const { passwordSalt, passwordHash } = hashPassword(newPassword);
     await updateOne('users', user._id, { passwordHash, passwordSalt });
     return setAuthCookieAndReturnUser(res, user);

@@ -14,7 +14,7 @@ const cleanUser = (user: User) => {
 
 usersRouter.use((req, res, next) => {
     if (req.userRole !== 'admin')
-        res.status(401).send();
+        res.status(401).send('User is not an admin');
     next();
 });
 
