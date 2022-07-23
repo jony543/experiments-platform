@@ -8,6 +8,7 @@ import { useSelector } from 'react-redux';
 import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import AuthForm from './components/AuthForm';
 import Experiments from './components/Experiments';
+import Notifications from './components/Notifications';
 import Users from './components/Users';
 import Workers from './components/Workers';
 import { fetchUser } from './store/actions';
@@ -41,6 +42,7 @@ const App = () => {
         setSelectedMenuItem(e.key);
     };
     return <Layout>
+        <Notifications />
         <Header>
             <Menu mode="horizontal" theme="dark" selectedKeys={[selectedMenuItem]} onClick={onMenuClick}>
                 <Menu.Item key="home"><Link to={getClientRoute('/')} ><div style={{
