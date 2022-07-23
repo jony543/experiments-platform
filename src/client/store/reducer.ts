@@ -1,7 +1,12 @@
 import { ActionType, Store, StoreAction } from "./types";
 import {modelId} from '../../server/utils/shared';
 
-export const reducer = (state: Store = {workers: {}}, action: StoreAction): Store => {
+let notificationsCount = 0;
+
+export const reducer = (state: Store = { // initial state
+    workers: {}, 
+    notifications: []
+}, action: StoreAction): Store => {
     switch (action.type) {
         case ActionType.SET_USER:
             const {user} = action;
@@ -18,6 +23,12 @@ export const reducer = (state: Store = {workers: {}}, action: StoreAction): Stor
         case ActionType.SET_WORKERS:
             const {workers, experimentId} = action;
             return {...state, workers: {...state.workers, [experimentId]: workers}}
+        case ActionType.NEW_NOTIFICATION:
+            const {notification} = action;
+            return {...state, notifications: [...state.notifications, {id: notificationsCount++, ...notification}]};
+        case ActionType.NOTIFICATION_DISPLAYED:
+            const {id: notificationId} = action;
+            return {...state, notifications: state.notifications.map(n => n.id === notificationId ? {...n, displayed: true} : n)};
         default:
             return state;
     }
