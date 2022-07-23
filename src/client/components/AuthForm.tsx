@@ -52,7 +52,7 @@ const AuthForm = ({ authAction, callback, initialValues }: { authAction?: AuthAc
             label="Password"
             name="password"
             rules={[{ required: !callback, message: 'Please input your password!' }]}>
-            <Input.Password />
+            <Input.Password {...callback && {autoComplete: "edit-password"}} />
         </Form.Item>
         {authAction === 'resetPassword' && <Form.Item
             label="New Password"
