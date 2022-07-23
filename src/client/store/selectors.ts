@@ -1,6 +1,7 @@
 import {Store} from './types';
 import { createSelector } from 'reselect';
 import { Selector } from 'react-redux';
+import { notification } from 'antd';
 
 const rootSelector = store => store.root as Store;
 export const getUser = createSelector(rootSelector, store => store.user);
@@ -13,3 +14,6 @@ export const getExperiments = createSelector(rootSelector, store => store.experi
 export const getExperimentsDict = getKeyValueSelector(getExperiments, '_id');
 export const getWorkers = (experimentId: string) => createSelector(rootSelector, store => store.workers[experimentId]);
 export const getWorkersDict = (experimentId: string) => getKeyValueSelector(getWorkers(experimentId), '_id');
+
+export const getNotifications = createSelector(rootSelector, store => store.notifications);
+export const getNotificationsToDisplay = createSelector(getNotifications, notifications => notifications.filter(n => !n.displayed));

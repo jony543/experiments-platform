@@ -28,7 +28,6 @@ const AuthForm = ({ authAction, callback, initialValues }: { authAction?: AuthAc
         return <Navigate to={getClientRoute(state as string)} />
     }
     const onFinish = (values: AuthParams) => {
-        console.log('auth form success:', values);
         if (callback)
             callback(values);
         else

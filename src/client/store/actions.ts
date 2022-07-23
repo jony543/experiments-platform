@@ -2,22 +2,37 @@ import axios from "axios";
 import { Dispatch } from "redux";
 import { AuthParams } from '../../server/types/api';
 import { Experiment, User, Worker } from '../../server/types/models';
-import { ActionType, EditExperimentAction, SetExperimentsAction, SetUserAction, SetUsersAction, SetWorkersAction } from "./types";
+import { ActionType, EditExperimentAction, NewNotification, Notification, SetExperimentsAction, SetUserAction, SetUsersAction, SetWorkersAction } from "./types";
+
+export const showNotification = (type: Notification['type'], title: Notification['title'], description: Notification['description']) => (dispatch: Dispatch) => {
+    dispatch({
+        type: ActionType.NEW_NOTIFICATION,
+        notification: {
+            type,
+            title,
+            description,
+        }
+    } as NewNotification);
+}
 
 const callApi = async <T>(dispatch: Dispatch, method: 'GET' | 'POST' | 'DELETE', url: string, data?: any) => {
     try {
-
         const result = await axios.request<T>({
             method, 
             url: APP_PREFIX + url,
             data,
         })
         if ((result.data as any).error) {
+            showNotification('error', `${method} ${url}`, 'request failed with error: ' + data.error)(dispatch);
             throw new Error (data.error);
+        } else {
+            showNotification(result.status < 300 ? 'success' : 'warning', `${method} ${url}`, 'request completed with status: ' + result.status)(dispatch);
+            return result.data;
         }
-        return result.data
     } catch (err) {
-        if (err?.response?.status == 401) {
+        const status = err?.response?.status;
+        showNotification('error', `${method} ${url}`, status ? 'request completed with status: ' + status : 'request error: ' + err)(dispatch);
+        if (status == 401) {
                 dispatch({
                     type: ActionType.SET_USER,
                 user: null,

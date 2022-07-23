@@ -16,10 +16,10 @@ experimentsRouter.delete('/:id', async (req, res) => {
     const experiment = await get('experiments', req.params.id);
     console.log('delte exp', {experiment});
     if (!experiment) // TODO - validate access
-        res.status(400);
+        return res.status(400);
     const workers = await find('workers', {experiment: objectId(req.params.id)});
     if (workers?.length > 0)
-        res.status(400).send(`can't delete experiment with workers`);
+        return res.status(400).send(`can't delete experiment with workers`);
     rmSync(`${process.env.STUDY_ASSETS_FOLDER}/${experiment.name}`, { recursive: true, force: true });
     await deleteOne('experiments', req.params.id);
     res.status(200).send();
