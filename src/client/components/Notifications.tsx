@@ -14,7 +14,8 @@ const Notifications = () => {
             notification[notificationToDisplay.type]({
                 message: notificationToDisplay.title,
                 description: notificationToDisplay.description,
-                duration: 3,
+                duration: 4.5,
+                placement: 'bottomRight',
             });
             dispatch({
                 type: ActionType.NOTIFICATION_DISPLAYED,
