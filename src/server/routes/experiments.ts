@@ -5,7 +5,7 @@ import { deleteOne, find, get, insertOne, updateOne } from '../services/collecti
 import { Experiment, Worker } from '../types/models';
 import { objectId } from '../utils/models';
 import { hashPassword } from './auth';
-import { rmSync } from 'fs';
+import { rmSync, existsSync } from 'fs';
 
 const experimentsRouter = express.Router();
 experimentsRouter.get('/', async (req, res) => {
@@ -26,20 +26,22 @@ experimentsRouter.delete('/:id', async (req, res) => {
 experimentsRouter.post('/', async (req, res) => {
     const experiment = req.body as Experiment;
     let result = experiment._id && await get('experiments', experiment._id);
+    const directory = `${process.env.STUDY_ASSETS_FOLDER}/${experiment.name}`;
     if (result) {
         // no need to update anything yet - just pull repo
         // const update = omit(experiment,'_id', 'name','git','user');
         // updateOne('experiments', experiment._id, update);
         // Object.assign(result, update);
-        const pullResult = await simpleGit(`${process.env.STUDY_ASSETS_FOLDER}/${experiment.name}`).pull();
-        console.log({pullResult});
+        if (existsSync(directory)) {
+            const pullResult = await simpleGit(directory).pull();
+            console.log({pullResult});
+        } else {
+            const cloneResult = await new Promise(res => simpleGit().clone(experiment.git, 'directory', {}, (err, data) => res({err, data})));
+            console.log({cloneResult});
+        }
     }
     else {
-        const cloneResult = await new Promise(res => simpleGit().clone(
-            experiment.git, 
-            `${process.env.STUDY_ASSETS_FOLDER}/${experiment.name}`, 
-            {}, 
-            (err, data) => res({err, data})));
+        const cloneResult = await new Promise(res => simpleGit().clone(experiment.git, 'directory', {}, (err, data) => res({err, data})));
         console.log({cloneResult});
         experiment.user = objectId(req.userId);
         result = await insertOne('experiments', experiment);

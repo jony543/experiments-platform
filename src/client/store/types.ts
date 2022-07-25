@@ -1,4 +1,4 @@
-import { Experiment, User, Worker } from "../../server/types/models"
+import { Experiment, User, Worker } from "../../server/types/models";
 
 export interface Notification {
     id: number;

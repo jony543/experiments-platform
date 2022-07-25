@@ -22,7 +22,7 @@ const Notifications = () => {
                 id: notificationToDisplay.id
             } as MarkNotificationDisplayed);
         }
-    }, [newNotifications])
+    }, [newNotifications]);
     return null;
 }
 
