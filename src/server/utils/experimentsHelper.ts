@@ -26,7 +26,10 @@ const saveSession = (data: any, createNew?: boolean) => {
     if (!data._id && platform.sessionId && !createNew) {
         data._id = platform.sessionId;
     }
-    return callApi('POST', '/sessions', data).then((result: Session) => platform.sessionId = idString(result._id));
+    return callApi('POST', '/sessions', data).then((result: Session) => {
+        platform.sessionId = idString(result._id);
+        return result;
+    });
 };
 
 Object.assign(platform, {getSession, getAllSessions, saveSession});
