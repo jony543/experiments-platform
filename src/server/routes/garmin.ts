@@ -1,5 +1,5 @@
 import express from 'express';
-import { getCollection } from '../services/collections';    // function for access mongodb specific collection
+import { getCollection } from '../services/collections';    // Function for access mongodb specific collection
 
 const garminRouter = express.Router();
 const garminCollection ="garmin-experiments-db";
