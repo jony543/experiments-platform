@@ -1,13 +1,14 @@
-import { Button, Collapse, Form, Table, Typography } from 'antd';
+import { Button, Collapse, Form, InputNumber, Table, Typography } from 'antd';
 import CollapsePanel from 'antd/lib/collapse/CollapsePanel';
 import Input from 'antd/lib/input/Input';
 import { ColumnsType } from 'antd/lib/table';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
+import { WorkersBatchCreationData } from '../../server/types/api';
 import { Worker } from '../../server/types/models';
 import { modelId } from '../../server/utils/shared';
-import { editWorker, fetchExperiments, fetchWorkers } from '../store/actions';
+import { createBatch, editWorker, fetchExperiments, fetchWorkers } from '../store/actions';
 import { getExperimentsDict, getWorkers } from '../store/selectors';
 import { useStoreDispatch } from '../store/store';
 import CopyToClipboard from './CopyToClipboard';
@@ -16,9 +17,12 @@ const WorkerForm = ({worker, experimentId} : {worker: Partial<Worker>, experimen
     const dispatch = useStoreDispatch();
     const isCreate = !modelId(worker as Worker);
     const [enabled, setEnabled] = useState(true);
-    const onFinish = (changes: Partial<Worker>) => {
+    const onFinish = (changes: Partial<Worker & WorkersBatchCreationData>) => {
         setEnabled(false);
-        dispatch(editWorker(experimentId, {...worker, ...changes}));
+        if (isCreate && changes.size > 1)
+            dispatch(createBatch(experimentId, changes.name, changes.size));
+        else
+            dispatch(editWorker(experimentId, {...worker, ...changes}));
     };
     const onFinishFailed = (errorInfo: any) => {
         console.log('worker form failed:', errorInfo);
@@ -35,6 +39,12 @@ const WorkerForm = ({worker, experimentId} : {worker: Partial<Worker>, experimen
             rules={[{ required: true, message: 'Please input a worker name' }]}>
             <Input />
         </Form.Item>
+        {isCreate && <Form.Item
+            label="Quantity"
+            name="size"
+            rules={[{ type: "integer" }]}>
+            <InputNumber type="number" defaultValue={1} />
+        </Form.Item>}
         <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
             <Button type="primary" disabled={!enabled} htmlType="submit">{isCreate ? 'Create' : 'Update'}</Button>
         </Form.Item>

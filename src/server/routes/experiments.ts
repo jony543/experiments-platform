@@ -2,11 +2,12 @@ import express from 'express';
 import { omit } from 'lodash';
 import simpleGit from 'simple-git';
 import stream from 'stream';
-import { deleteOne, find, get, create, update } from '../services/collections';
+import { deleteOne, find, get, create, update, findOne } from '../services/collections';
 import { Experiment, Worker } from '../types/models';
 import { objectId } from '../utils/models';
 import { hashPassword } from './auth';
 import { rmSync, existsSync } from 'fs';
+import { WorkersBatchCreationData } from '../types/api';
 
 const experimentsRouter = express.Router();
 experimentsRouter.get('/', async (req, res) => {
@@ -22,15 +23,18 @@ experimentsRouter.get('/:id/results/:download?', async (req, res) => {
         return res.status(400).send('Experiment does not exist');
 
     const workers = await find('workers', {experiment: objectId(req.params.id)}, {projection: {_id: 1}});
-    if (!workers?.length) {
-        return res.send('[]');
-    }
-
+    
     const responseStream = download ? new stream.PassThrough() : res;
     if (download) {
         responseStream.pipe(res);
         res.set('Content-disposition', 'attachment; filename=results.json');
         res.set('Content-Type', 'application/json');
+    }
+    
+    if (!workers?.length) {
+        responseStream.write('[]');
+        responseStream.end();
+        return;
     }
 
     responseStream.write('[');
@@ -76,7 +80,7 @@ experimentsRouter.post('/', async (req, res) => {
         const cloneResult = await new Promise(res => simpleGit().clone(experiment.git, 'directory', {}, (err, data) => res({err, data})));
         console.log({cloneResult});
         experiment.user = objectId(req.userId);
-        const newExperimentId = await create('experiments', experiment);
+        const [newExperimentId] = await create('experiments', experiment);
         result = await get('experiments', newExperimentId);
     }
     res.json(result);
@@ -98,9 +102,29 @@ experimentsRouter.post('/:id/workers', async (req, res) => {
         await update('workers', result._id, updateData);
         Object.assign(result, updateData);
     } else {
-        const newWorkerId = await create('workers', {...worker, experiment: experiment._id, key: hashPassword(`${worker.name}`).passwordHash});
+        const [newWorkerId] = await create('workers', {...worker, experiment: experiment._id, key: hashPassword(`${worker.name}`).passwordHash});
         result = await get('workers', newWorkerId);
     }
     res.json(result);
+});
+experimentsRouter.post('/:id/batches', async (req, res) => {
+    const {size, name: batchName} = req.body as WorkersBatchCreationData;
+    const experiment = await get('experiments', req.params.id); // TODO: validate user access to experiment
+    if (!experiment)
+        return res.status(400).send('Experiment does not exists');
+
+    const getWorkerName = (id: number) => `${batchName}-${id}`;
+    const existing = await findOne('workers', {experiment: experiment._id, name: getWorkerName(1)});
+    if (existing)
+        return res.status(400).send('A batch with the same name was already created');
+        
+    const newWorkers = [...Array(size)].map((ignore, idx) => {
+        const name = getWorkerName(idx);
+        console.log({ignore, name, idx});
+        return {experiment: experiment._id, name, key: hashPassword(name).passwordHash} as Worker;
+    });
+    await create('workers', newWorkers);
+
+    res.json({succuss: true});
 });
 export default experimentsRouter;

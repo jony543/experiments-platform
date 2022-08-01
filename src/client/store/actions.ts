@@ -1,6 +1,6 @@
 import axios from "axios";
 import { Dispatch } from "redux";
-import { AuthParams } from '../../server/types/api';
+import { AuthParams, WorkersBatchCreationData } from '../../server/types/api';
 import { Experiment, User, Worker } from '../../server/types/models';
 import { ActionType, EditExperimentAction, NewNotification, Notification, SetExperimentsAction, SetUserAction, SetUsersAction, SetWorkersAction } from "./types";
 
@@ -113,5 +113,10 @@ export const fetchWorkers = (experimentId: string) => async (dispatch: Dispatch)
 
 export const editWorker = (experimentId: string, editDate: Partial<Worker>) => async (dispatch: Dispatch) => {
     const workers = await callApi<Worker[]>(dispatch, 'POST', `/admin-api/experiments/${experimentId}/workers`, editDate);
+    fetchWorkers(experimentId)(dispatch);
+}
+
+export const createBatch = (experimentId: string, name: string, size: number) => async (dispatch: Dispatch) => {
+    await callApi<Worker[]>(dispatch, 'POST', `/admin-api/experiments/${experimentId}/batches`, {size, name} as WorkersBatchCreationData);
     fetchWorkers(experimentId)(dispatch);
 }

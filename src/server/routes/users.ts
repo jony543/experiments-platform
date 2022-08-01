@@ -29,7 +29,7 @@ usersRouter.post('/', async (req, res) => {
     if (existing)
         return res.status(400).send('username already exists');
     const { passwordSalt, passwordHash } = hashPassword(password);
-    const newUserId = await create('users', { username, passwordHash, passwordSalt } as User);
+    const [newUserId] = await create('users', { username, passwordHash, passwordSalt } as User);
     const user = await get('users', newUserId);
     res.json(cleanUser(user));
 });

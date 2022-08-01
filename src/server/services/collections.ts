@@ -28,9 +28,16 @@ export const findOne = <T extends CollectionName>(collectionName: T, filter: Fil
 export const get = <T extends CollectionName>(collectionName: T, id: string | ObjectId) => 
     findOne(collectionName, { _id: objectId(id) as any });
 
-export const create = async <T extends CollectionName>(collectionName: T, item: OptionalUnlessRequiredId<CollectionModel<T>>) => {
-    const {insertedId} = await getCollection<CollectionModel<T>>(collectionName).insertOne({...item, createdAt: new Date()});
-    return insertedId;
+export const create = async <T extends CollectionName>(
+    collectionName: T,
+    item: OptionalUnlessRequiredId<CollectionModel<T>> | OptionalUnlessRequiredId<CollectionModel<T>>[]) => {
+        if (item instanceof Array) {
+            var result = await getCollection<CollectionModel<T>>(collectionName).insertMany(item.map(x => ({...x, createdAt: new Date()})));
+            return Object.values(result.insertedIds);
+        } else {
+            const {insertedId} = await getCollection<CollectionModel<T>>(collectionName).insertOne({...item, createdAt: new Date()});
+            return [insertedId];
+        }
 };
 
 export const update = async <T extends CollectionName>(collectionName: T, id: string | ObjectId, update: Partial<CollectionModel<T>>) =>

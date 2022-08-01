@@ -120,7 +120,7 @@ if (!DISABLE_REGISTRATION) {
         if (existing)
             throw new Error('username_exits');
         const { passwordSalt, passwordHash } = hashPassword(password);
-        const newUserId = await create('users', { username, passwordHash, passwordSalt } as User);
+        const [newUserId] = await create('users', { username, passwordHash, passwordSalt } as User);
         const user = await get('users', newUserId);
         return setAuthCookieAndReturnUser(res, user);
     });
