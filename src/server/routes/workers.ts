@@ -1,5 +1,5 @@
 import express from "express";
-import { find, get, insertOne, updateOne } from "../services/collections";
+import { find, get, create, update } from "../services/collections";
 import { Session } from "../types/models";
 import { objectId } from "../utils/models";
 import { verifyWorkerMiddleware } from "./auth";
@@ -10,11 +10,11 @@ workersApi.use(verifyWorkerMiddleware)
 workersApi.post('/sessions', async (req, res) => {
     const session = req.body as Session;
     if (session?._id) {
-        await updateOne('sessions', session._id, session);
+        await update('sessions', session._id, session);
         const result = await get('sessions', session._id);
         res.json(result);
     } else {
-        const result = await insertOne('sessions', { ...session, subId: objectId(req.workerId) });
+        const result = await create('sessions', { ...session, subId: objectId(req.workerId) });
         res.json(result);
     }
 });

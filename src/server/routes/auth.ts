@@ -2,7 +2,7 @@ import { pbkdf2Sync, randomBytes } from 'crypto';
 import express from "express";
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
 import { omit, pick } from 'lodash';
-import { findOne, get, insertOne, updateOne } from "../services/collections";
+import { findOne, get, create, update } from "../services/collections";
 import { AuthParams } from "../types/api";
 import { User, Worker } from "../types/models";
 import { DISABLE_REGISTRATION } from '../utils/constants';
@@ -109,18 +109,19 @@ authRouter.post('/resetPassword', verifyUserMiddleware, async (req, res) => {
     if (!validatePassword(user, password))
         return res.status(400).send('Wrong password');
     const { passwordSalt, passwordHash } = hashPassword(newPassword);
-    await updateOne('users', user._id, { passwordHash, passwordSalt });
+    await update('users', user._id, { passwordHash, passwordSalt });
     return setAuthCookieAndReturnUser(res, user);
 });
 
 if (!DISABLE_REGISTRATION) {
     authRouter.post('/register', async (req, res) => {
         const { username, password } = req.body as AuthParams;
-        let user = await findOne('users',{ username });
-        if (user)
+        let existing = await findOne('users',{ username });
+        if (existing)
             throw new Error('username_exits');
         const { passwordSalt, passwordHash } = hashPassword(password);
-        user = await insertOne('users', { username, passwordHash, passwordSalt } as User);
+        const newUserId = await create('users', { username, passwordHash, passwordSalt } as User);
+        const user = await get('users', newUserId);
         return setAuthCookieAndReturnUser(res, user);
     });
 }

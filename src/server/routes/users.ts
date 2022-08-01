@@ -1,5 +1,5 @@
 import express from 'express';
-import { find, findOne, get, insertOne, updateOne } from '../services/collections';
+import { find, findOne, get, create, update } from '../services/collections';
 import { AuthParams } from '../types/api';
 import { User } from '../types/models';
 import { hashPassword } from './auth';
@@ -25,11 +25,12 @@ usersRouter.get('/', async (req, res) => {
 
 usersRouter.post('/', async (req, res) => {
     const { username, password } = req.body as AuthParams;
-    let user = await findOne('users',{ username });
-    if (user)
+    let existing = await findOne('users',{ username });
+    if (existing)
         return res.status(400).send('username already exists');
     const { passwordSalt, passwordHash } = hashPassword(password);
-    user = await insertOne('users', { username, passwordHash, passwordSalt } as User);
+    const newUserId = await create('users', { username, passwordHash, passwordSalt } as User);
+    const user = await get('users', newUserId);
     res.json(cleanUser(user));
 });
 
@@ -39,7 +40,7 @@ usersRouter.post('/:id', async (req, res) => {
     if (!user)
         return res.status(400).send('username does not exists');
     const { passwordSalt, passwordHash } = password ? hashPassword(password) : user;
-    await updateOne('users', user._id, { username, passwordHash, passwordSalt } as User);
+    await update('users', user._id, { username, passwordHash, passwordSalt } as User);
     res.json(cleanUser(Object.assign(user, {username})));
 });
 
