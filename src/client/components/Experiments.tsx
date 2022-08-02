@@ -1,3 +1,4 @@
+import { DownloadOutlined } from "@ant-design/icons";
 import { Button, Collapse, Form, Input, Popover } from "antd";
 import CollapsePanel from "antd/lib/collapse/CollapsePanel";
 import React, { useEffect, useMemo, useState } from "react";
@@ -44,7 +45,8 @@ const Experiment = ({ experiment }: { experiment: Partial<Experiment> }) => {
             <Input disabled={!isCreate} />
         </Form.Item>
         <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
-            <Button type="primary" htmlType="submit">{isCreate ? 'Create' : 'Update'}</Button>
+            <Button type="primary" htmlType="submit" style={{marginRight: '10px'}}>{isCreate ? 'Create' : 'Update'}</Button>
+            <Button type="primary" icon={<DownloadOutlined />} href={`${APP_PREFIX}/admin-api/experiments/${experimentId}/results/download`} target="_blank">Results</Button>
             <Link style={{ marginLeft: '10px' }} to={getClientRoute(`/experiments/${experimentId}/workers`)}>Manage workers</Link>
             {!isCreate && <Popover title="Are you sure?" trigger="click" visible={deleteConfirmation} onVisibleChange={v => setDelteConfirmation(v)} content={<div>
                 <p>This action is not reversible!</p>

@@ -31,6 +31,11 @@ const saveSession = (data: any, createNew?: boolean) => {
         return result;
     });
 };
+const goToUrl = (url: string) => {
+    const experimentName = window.location.pathname.match(/\/experiment\/[^\/]*\//)[0];
+    const start = window.location.pathname.substring(0, window.location.pathname.indexOf(experimentName));
+    window.location.pathname = start + experimentName + url;
+}
 
-Object.assign(platform, {getSession, getAllSessions, saveSession});
+Object.assign(platform, {getSession, getAllSessions, saveSession, goToUrl});
 Object.assign(window, {platform});
