@@ -1,23 +1,40 @@
-import axios, { AxiosRequestConfig } from "axios"
+import axios from "axios";
 import { Dispatch } from "redux";
-import { AuthParams } from '../../server/types/api';
-import { Experiment, User } from '../../server/types/models';
-import { ActionType, EditExperimentAction, SetExperimentsAction, SetUserAction } from "./types";
+import { AuthParams, WorkersBatchCreationData } from '../../server/types/api';
+import { Experiment, User, Worker } from '../../server/types/models';
+import { ActionType, EditExperimentAction, NewNotification, Notification, SetExperimentsAction, SetUserAction, SetUsersAction, SetWorkersAction } from "./types";
 
-const callApi = async <T>(dispatch: Dispatch, method: 'GET' | 'POST', url: string, data?: any) => {
+export const showNotification = (type: Notification['type'], title: Notification['title'], description: Notification['description']) => (dispatch: Dispatch) => {
+    dispatch({
+        type: ActionType.NEW_NOTIFICATION,
+        notification: {
+            type,
+            title,
+            description,
+        }
+    } as NewNotification);
+}
+
+const callApi = async <T>(dispatch: Dispatch, method: 'GET' | 'POST' | 'DELETE', url: string, data?: any) => {
     try {
-
         const result = await axios.request<T>({
             method, 
             url: APP_PREFIX + url,
             data,
         })
         if ((result.data as any).error) {
+            showNotification('error', `${method} ${url}`, 'request failed with error: ' + data.error)(dispatch);
             throw new Error (data.error);
+        } else {
+            showNotification(result.status < 300 ? 'success' : 'warning', `${method} ${url}`, 'request completed with status: ' + result.status)(dispatch);
+            return result.data;
         }
-        return result.data
     } catch (err) {
-        if (err?.response?.status == 401) {
+        const status = err?.response?.status;
+        const content = err?.response?.data;
+        const message = `Error${status ? ` ${status}` : ''}: ${content || err}`;
+        showNotification('error', `${method} ${url}`, message)(dispatch);
+        if (status == 401) {
                 dispatch({
                     type: ActionType.SET_USER,
                 user: null,
@@ -26,10 +43,11 @@ const callApi = async <T>(dispatch: Dispatch, method: 'GET' | 'POST', url: strin
     }
 }
 
-export const authenticate = (username: string, password: string, register?: boolean) => async (dispatch: Dispatch) => {
+export type AuthAction = 'register' | 'login' | 'resetPassword';
+export const authenticate = (username: string, password: string, action: AuthAction, newPassword?: string) => async (dispatch: Dispatch) => {
     const user = await callApi<User>(dispatch, 'POST',
-        `/auth/${register ? 'register' : 'login'}`,
-        { username, password } as AuthParams);
+        `/auth/${action}`,
+        { username, password, newPassword } as AuthParams);
     dispatch({
         type: ActionType.SET_USER,
         user,
@@ -42,6 +60,24 @@ export const fetchUser = () => async (dispatch: Dispatch) => {
         type: ActionType.SET_USER,
         user,
     } as SetUserAction);
+}
+
+export const fetchUsers = () => async (dispatch: Dispatch) => {
+    const users = await callApi<User[]>(dispatch, 'GET', `/admin-api/users`);
+    dispatch({
+        type: ActionType.SET_USERS,
+        users,
+    } as SetUsersAction);
+}
+
+export const createUser = (params: Partial<AuthParams>) => async (dispatch: Dispatch) => {
+    await callApi<Experiment>(dispatch, 'POST', `/admin-api/users`, params);
+    fetchUsers()(dispatch);
+}
+
+export const editUser = (userId:string, params: Partial<AuthParams>) => async (dispatch: Dispatch) => {
+    await callApi<Experiment>(dispatch, 'POST', `/admin-api/users/${userId}`, params);
+    fetchUsers()(dispatch);
 }
 
 export const fetchExperiments = () => async (dispatch: Dispatch) => {
@@ -58,4 +94,29 @@ export const editExperiment = (editData: Partial<Experiment>) => async (dispatch
         type: ActionType.EDIT_EXPERIMENT,
         experiment,
     } as EditExperimentAction);
+    fetchExperiments()(dispatch);
+}
+
+export const deleteExperiment = (experimentId: string) => async (dispatch: Dispatch) => {
+    await callApi<Experiment>(dispatch, 'DELETE', `/admin-api/experiments/${experimentId}`);
+    fetchExperiments()(dispatch);
+}
+
+export const fetchWorkers = (experimentId: string) => async (dispatch: Dispatch) => {
+    const workers = await callApi<Worker[]>(dispatch, 'GET', `/admin-api/experiments/${experimentId}/workers`);
+    dispatch({
+        type: ActionType.SET_WORKERS,
+        workers,
+        experimentId,
+    } as SetWorkersAction);
+}
+
+export const editWorker = (experimentId: string, editDate: Partial<Worker>) => async (dispatch: Dispatch) => {
+    const workers = await callApi<Worker[]>(dispatch, 'POST', `/admin-api/experiments/${experimentId}/workers`, editDate);
+    fetchWorkers(experimentId)(dispatch);
+}
+
+export const createBatch = (experimentId: string, name: string, size: number) => async (dispatch: Dispatch) => {
+    await callApi<Worker[]>(dispatch, 'POST', `/admin-api/experiments/${experimentId}/batches`, {size, name} as WorkersBatchCreationData);
+    fetchWorkers(experimentId)(dispatch);
 }

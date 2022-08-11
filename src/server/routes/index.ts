@@ -1,11 +1,12 @@
 import express, { Application } from 'express';
-import path from 'path';
 import { createProxyMiddleware } from 'http-proxy-middleware';
-import authRouter, { getUserForClient, verifyUserMiddleware } from './auth';
+import path from 'path';
+import { findOne, get } from '../services/collections';
+import { modelId } from '../utils/shared';
+import authRouter, { getUserForClient, verifyUserMiddleware, verifyWorkerMiddleware } from './auth';
 import experimentsRouter from './experiments';
-import { objectId } from '../utils/models';
-import { get } from '../services/collections';
 import garminRouter from './garmin';
+import usersRouter from './users';
 import workersApi from './workers';
 
 export default (app: Application) => {
@@ -23,12 +24,29 @@ export default (app: Application) => {
         return res.json(getUserForClient(user));
     });
     api.use('/experiments', experimentsRouter);
+    api.use('/users', usersRouter);
     appRouter.use('/admin-api', api);
 
-    appRouter.use('/workers-api', workersApi)
+    appRouter.use('/workers-api', workersApi);
 
     const publicRoutes = express.Router();
     publicRoutes.use('/garmin', garminRouter);
+    publicRoutes.use('/experiment',
+        verifyWorkerMiddleware,
+        async (req, res, next) => { // verify worker experiment
+            const experimentName = decodeURIComponent(new URL(req.url, 'http://dummy').pathname.split('/').find(Boolean));
+            const experiment = await findOne('experiments', {name: experimentName}); // TODO - cache
+            if (req.workerExperimentId !== modelId(experiment))
+                return res.status(401).send();
+            next();
+        },
+        async (req, res, next) => {
+            if (req.url.includes('experiments-platform.js'))
+                res.sendFile(path.resolve(__dirname, '../../client/experiments-platform.js'));
+            else
+                next();
+        },
+        express.static(process.env.STUDY_ASSETS_FOLDER));
     appRouter.use('/public', publicRoutes);
     
     const clientHandler = process.env.NODE_ENV == 'development' ? 

@@ -1,17 +1,25 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CopyPlugin = require("copy-webpack-plugin");
+require('dotenv').config({ path: './.env' });
+const webpack = require('webpack');
+
+const appBase = `${process.env.APP_PREFIX || ''}/admin`
 
 module.exports = {
     devServer: {
         port: 3333,
         historyApiFallback: {
-            index: '/admin',
+            index: appBase,
         }
     },
-    entry: './src/client/index.tsx',
+    entry: {
+        main: './src/client/index.tsx',
+        'experiments-platform': './src/server/utils/experimentsHelper.ts',
+    },
     output: {
         path: path.join(__dirname, '/dist/client'),
-        publicPath: '/admin',
+        publicPath: appBase,
     },
     // optimization
     resolve: {
@@ -40,5 +48,16 @@ module.exports = {
             },
         ],
     },
-    plugins: [new HtmlWebpackPlugin({template: './src/client/index.html'})],
+    plugins: [
+        new HtmlWebpackPlugin({ template: './src/client/index.html', excludeChunks: ['experiments-platform'] }),
+        new webpack.DefinePlugin({
+            APP_PREFIX: JSON.stringify(process.env.APP_PREFIX || ''),
+            DISABLE_REGISTRATION: process.env.DISABLE_REGISTRATION || false,
+        }),
+        new CopyPlugin({
+            patterns: [
+                { from: "./src/client/assets", to: "assets" },
+            ],
+        }),
+    ],
 }

@@ -1,0 +1,1 @@
+export const DISABLE_REGISTRATION = !!parseInt(process.env.DISABLE_REGISTRATION);

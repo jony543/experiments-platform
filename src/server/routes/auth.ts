@@ -1,13 +1,14 @@
+import { pbkdf2Sync, randomBytes } from 'crypto';
 import express from "express";
-import { findOne, getCollection, insertOne } from "../services/collections";
-import { randomBytes, pbkdf2Sync } from 'crypto';
-import { Collection } from "mongodb";
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
 import { omit, pick } from 'lodash';
-import { User } from "../types/models";
+import { findOne, get, create, update } from "../services/collections";
 import { AuthParams } from "../types/api";
+import { User, Worker } from "../types/models";
+import { DISABLE_REGISTRATION } from '../utils/constants';
+import { idString } from "../utils/shared";
 
-const hashPassword = (password: string, salt?: string) => {
+export const hashPassword = (password: string, salt?: string) => {
     const passwordSalt = salt || randomBytes(16).toString('hex');
     const passwordHash = pbkdf2Sync(password, passwordSalt, 1000, 64, `sha512`).toString(`hex`);
     return { passwordSalt, passwordHash };
@@ -17,7 +18,7 @@ export const getUserForClient = (user: User) => omit(user, '_id', 'passwordHash'
 
 const setAuthCookieAndReturnUser = (res: express.Response, user: User) => {
     const token = jwt.sign(
-        pick(user, '_id', 'usernmae'),
+        pick(user, '_id', 'username', 'role'),
         process.env.SECRET_KEY,
         {
             expiresIn: "2h",
@@ -29,7 +30,7 @@ const setAuthCookieAndReturnUser = (res: express.Response, user: User) => {
 
 export const setWorkerCookie = (res: express.Response, worker: Worker) => {
     const token = jwt.sign(
-        pick(worker, '_id', 'name'),
+        pick(worker, '_id', 'name', 'experiment'),
         process.env.SECRET_KEY,
         {
             expiresIn: "2h",
@@ -42,16 +43,30 @@ export const verifyUserMiddleware = async (req: express.Request, res: express.Re
     const decoded = verifyAuthCookie('auth', req);
     if (decoded) {
        req.userId = decoded['_id'];
+       req.userRole = decoded['role'];
        next();
     } else {
         return res.status(401).send();
     }
 }
 
+const setWorkerProps = (req: express.Request, worker: Pick<Worker, '_id' | 'experiment'>) => {
+    req.workerId = idString(worker._id);
+    req.workerExperimentId =  idString(worker.experiment);
+}
+
 export const verifyWorkerMiddleware = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const decoded = verifyAuthCookie('worker', req);
     if (decoded) {
-       req.workerId = decoded['_id'];
+        setWorkerProps(req, decoded as Worker);
+    } else {
+        const key = req.query.key as string;
+        const worker = key && await findOne('workers', {key});
+        if (!worker) {
+            return res.status(401).send();
+        }
+        setWorkerProps(req, worker);
+        setWorkerCookie(res, worker); // TODO - set cookie only in browser context (check user agent maybe)
     }
     next();
 }
@@ -69,28 +84,44 @@ export const verifyAuthCookie = (cookieName: string, req: express.Request) => {
 }
 
 const authRouter = express.Router();
+
+const validatePassword = (user:User, password: string) => {
+    const { passwordHash } = hashPassword(password, user.passwordSalt);
+    return user.passwordHash === passwordHash;
+};
+
 authRouter.post('/login', async (req, res) => {
     const { username, password } = req.body as AuthParams;
 
     let user = await findOne('users', {username});
     if (!user) {
         await new Promise(res => setTimeout(res, 2941));
-        return res.status(401).send();
+        return res.status(401).send('Wrong username or password');
     }
-    const { passwordHash } = hashPassword(password, user.passwordSalt);
-    if (user.passwordHash != passwordHash)
-        return res.status(401).send();
+    if (!validatePassword(user, password))
+        return res.status(401).send('Wrong username or password');
     return setAuthCookieAndReturnUser(res, user);
 });
 
-if (!process.env.DISABLE_REGISTRATION) {
+authRouter.post('/resetPassword', verifyUserMiddleware, async (req, res) => {
+    const user = await get('users', req.userId);
+    const { password, newPassword } = req.body as AuthParams;
+    if (!validatePassword(user, password))
+        return res.status(400).send('Wrong password');
+    const { passwordSalt, passwordHash } = hashPassword(newPassword);
+    await update('users', user._id, { passwordHash, passwordSalt });
+    return setAuthCookieAndReturnUser(res, user);
+});
+
+if (!DISABLE_REGISTRATION) {
     authRouter.post('/register', async (req, res) => {
         const { username, password } = req.body as AuthParams;
-        let user = await findOne('users',{ username });
-        if (user)
+        let existing = await findOne('users',{ username });
+        if (existing)
             throw new Error('username_exits');
         const { passwordSalt, passwordHash } = hashPassword(password);
-        user = await insertOne('users', { username, passwordHash, passwordSalt } as User);
+        const [newUserId] = await create('users', { username, passwordHash, passwordSalt } as User);
+        const user = await get('users', newUserId);
         return setAuthCookieAndReturnUser(res, user);
     });
 }
