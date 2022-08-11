@@ -1,9 +1,9 @@
 import { defaultPrefixCls } from 'antd/lib/config-provider';
 import express from 'express';
-import { getCollection } from '../services/collections';    // function for access mongodb specific collection
+import { getCollection , CollectionName} from '../services/collections';    // function for access mongodb specific collection
 
 const garminRouter = express.Router();
-const garminCollection ="garmin-experiments-db";
+const garminCollection = "garmin-experiments-db";
 const success = "success";
 const err = "error";
 
@@ -30,6 +30,25 @@ function updateDBCollection(collectionName:string, req){
     // print message
     console.log(`\n ~~~~~${collectionName} DATA SENT TO MONGO~~~~\n`);
 }
+
+function findAndReplaceDBCollection(collectionName:CollectionName, req){
+    const collection = getCollection(collectionName);
+    const rawData = req.body;
+    const email = rawData['email'];
+    const timestamp = rawData['timestamp'];
+    const filter = {'timestamp':timestamp, 'email':email};
+    collection.replaceOne(filter, rawData, {upsert: true});
+    console.log(`\n ~~~~~${collectionName} DATA SENT TO MONGO~~~~\n`);
+}
+
+garminRouter.post('/bart', async (req, res) => {
+    findAndReplaceDBCollection('bart', req);
+});
+
+garminRouter.post('/mgt', async (req, res) => {
+    findAndReplaceDBCollection('mgt', req);
+});
+
 
 // called by garmin server, process the request, '/garmindata' is the relative path
 garminRouter.post('/garmindata', async (req, res) => {
