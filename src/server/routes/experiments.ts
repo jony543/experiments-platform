@@ -72,12 +72,12 @@ experimentsRouter.post('/', async (req, res) => {
             const pullResult = await simpleGit(directory).pull();
             console.log({pullResult});
         } else {
-            const cloneResult = await new Promise(res => simpleGit().clone(experiment.git, 'directory', {}, (err, data) => res({err, data})));
+            const cloneResult = await new Promise(res => simpleGit().clone(experiment.git, directory, {}, (err, data) => res({err, data})));
             console.log({cloneResult});
         }
     }
     else {
-        const cloneResult = await new Promise(res => simpleGit().clone(experiment.git, 'directory', {}, (err, data) => res({err, data})));
+        const cloneResult = await new Promise(res => simpleGit().clone(experiment.git, directory, {}, (err, data) => res({err, data})));
         console.log({cloneResult});
         experiment.user = objectId(req.userId);
         const [newExperimentId] = await create('experiments', experiment);
