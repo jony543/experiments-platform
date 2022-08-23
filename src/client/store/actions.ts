@@ -116,6 +116,11 @@ export const editWorker = (experimentId: string, editDate: Partial<Worker>) => a
     fetchWorkers(experimentId)(dispatch);
 }
 
+export const deleteWorker = (experimentId: string, workerId: string) => async (dispatch: Dispatch) => {
+    await callApi<Experiment>(dispatch, 'DELETE', `/admin-api/experiments/${experimentId}/workers/${workerId}`);
+    fetchWorkers(experimentId)(dispatch);
+}
+
 export const createBatch = (experimentId: string, name: string, size: number) => async (dispatch: Dispatch) => {
     await callApi<Worker[]>(dispatch, 'POST', `/admin-api/experiments/${experimentId}/batches`, {size, name} as WorkersBatchCreationData);
     fetchWorkers(experimentId)(dispatch);

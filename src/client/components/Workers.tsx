@@ -1,4 +1,4 @@
-import { Button, Collapse, Form, InputNumber, Table, Typography } from 'antd';
+import { Button, Collapse, Form, InputNumber, Popover, Table, Typography } from 'antd';
 import CollapsePanel from 'antd/lib/collapse/CollapsePanel';
 import Input from 'antd/lib/input/Input';
 import { ColumnsType } from 'antd/lib/table';
@@ -8,13 +8,14 @@ import { useParams } from 'react-router-dom';
 import { WorkersBatchCreationData } from '../../server/types/api';
 import { Worker } from '../../server/types/models';
 import { modelId } from '../../server/utils/shared';
-import { createBatch, editWorker, fetchExperiments, fetchWorkers } from '../store/actions';
+import { createBatch, deleteWorker, editWorker, fetchExperiments, fetchWorkers } from '../store/actions';
 import { getExperimentsDict, getWorkers } from '../store/selectors';
 import { useStoreDispatch } from '../store/store';
 import CopyToClipboard from './CopyToClipboard';
 
 const WorkerForm = ({worker, experimentId} : {worker: Partial<Worker>, experimentId: string}) => {
     const dispatch = useStoreDispatch();
+    const workerId = modelId(worker as Worker);
     const isCreate = !modelId(worker as Worker);
     const [enabled, setEnabled] = useState(true);
     const onFinish = (changes: Partial<Worker & WorkersBatchCreationData>) => {
@@ -26,6 +27,11 @@ const WorkerForm = ({worker, experimentId} : {worker: Partial<Worker>, experimen
     };
     const onFinishFailed = (errorInfo: any) => {
         console.log('worker form failed:', errorInfo);
+    };
+    const [deleteConfirmation, setDelteConfirmation] = useState(false);
+    const deleteWorkerConfirmed = () => {
+        dispatch(deleteWorker(experimentId, workerId));
+        setDelteConfirmation(false);
     };
     return <Form name="worker"
         labelCol={{ span: 8 }}
@@ -47,6 +53,15 @@ const WorkerForm = ({worker, experimentId} : {worker: Partial<Worker>, experimen
         </Form.Item>}
         <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
             <Button type="primary" disabled={!enabled} htmlType="submit">{isCreate ? 'Create' : 'Update'}</Button>
+            {!isCreate && <Popover title="Are you sure?" trigger="click" visible={deleteConfirmation} onVisibleChange={v => setDelteConfirmation(v)} content={<div>
+                <p>This action is not reversible!</p>
+                <div style={{ display: 'flex' }}>
+                    <Button type="primary" size="small" onClick={deleteWorkerConfirmed}>Yes, delete</Button>
+                    <Button size="small" style={{ marginLeft: '10px' }} onClick={() => setDelteConfirmation(false)}>Cancel</Button>
+                </div>
+            </div>}>
+                <Button type="link">Delete</Button>
+            </Popover>}
         </Form.Item>
     </Form>
 }

@@ -56,7 +56,7 @@ experimentsRouter.delete('/:id', async (req, res) => {
     if (workers?.length > 0)
         return res.status(400).send(`can't delete experiment with workers`);
     rmSync(`${process.env.STUDY_ASSETS_FOLDER}/${experiment.name}`, { recursive: true, force: true });
-    await deleteOne('experiments', req.params.id);
+    await deleteOne('experiments', req.params.id,);
     res.status(200).send();
 });
 experimentsRouter.post('/', async (req, res) => {
@@ -92,6 +92,16 @@ experimentsRouter.post('/', async (req, res) => {
 experimentsRouter.get('/:id/workers', async (req, res) => {
     const workers = await find('workers', {experiment: objectId(req.params.id)});
     res.json(workers);
+});
+experimentsRouter.delete('/:id/workers/:workerId', async (req, res) => {
+    const experiment = await get('experiments', req.params.id);
+    if (!experiment) // TODO - validate access
+        return res.status(400).send('Experiment does not exist');
+    const worker = await findOne('workers', {experiment: objectId(req.params.id), _id: objectId(req.params.workerId)});
+    if (!worker) // TODO - validate access
+        return res.status(400).send('Worker does not exist');
+    await deleteOne('workers', worker._id);
+    res.status(200).send();
 });
 experimentsRouter.post('/:id/workers', async (req, res) => {
     const worker = req.body as Worker;
