@@ -61,29 +61,33 @@ experimentsRouter.delete('/:id', async (req, res) => {
 });
 experimentsRouter.post('/', async (req, res) => {
     const experiment = req.body as Experiment;
-    let result = experiment._id && await get('experiments', experiment._id);
+    let existing = experiment._id && await get('experiments', experiment._id);
     const directory = `${process.env.STUDY_ASSETS_FOLDER}/${experiment.name}`;
-    if (result) {
+    if (existing) {
         // no need to update anything yet - just pull repo
         // const update = omit(experiment,'_id', 'name','git','user');
         // updateOne('experiments', experiment._id, update);
         // Object.assign(result, update);
-        if (existsSync(directory)) {
-            const pullResult = await simpleGit(directory).pull();
-            console.log({pullResult});
-        } else {
-            const cloneResult = await new Promise(res => simpleGit().clone(experiment.git, directory, {}, (err, data) => res({err, data})));
-            console.log({cloneResult});
+        if (existing.git) {
+            if (existsSync(directory)) {
+                const pullResult = await simpleGit(directory).pull();
+                console.log({pullResult});
+            } else {
+                const cloneResult = await new Promise(res => simpleGit().clone(existing.git, directory, {}, (err, data) => res({err, data})));
+                console.log({cloneResult});
+            }
         }
     }
     else {
-        const cloneResult = await new Promise(res => simpleGit().clone(experiment.git, directory, {}, (err, data) => res({err, data})));
-        console.log({cloneResult});
+        if (experiment.git) {
+            const cloneResult = await new Promise(res => simpleGit().clone(experiment.git, directory, {}, (err, data) => res({err, data})));
+            console.log({cloneResult});
+        }
         experiment.user = objectId(req.userId);
         const [newExperimentId] = await create('experiments', experiment);
-        result = await get('experiments', newExperimentId);
+        existing = await get('experiments', newExperimentId);
     }
-    res.json(result);
+    res.json(existing);
 });
 experimentsRouter.get('/:id/workers', async (req, res) => {
     const workers = await find('workers', {experiment: objectId(req.params.id)});

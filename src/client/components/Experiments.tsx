@@ -39,9 +39,9 @@ const Experiment = ({ experiment }: { experiment: Partial<Experiment> }) => {
             <Input disabled={!isCreate} />
         </Form.Item>
         <Form.Item
-            label="Repository"
+            label="Repository (optional)"
             name="git"
-            rules={[{ required: true, message: 'Please input a git repository connection string' }]}>
+            rules={[{ required: false, message: 'Please input a git repository url' }]}>
             <Input disabled={!isCreate} />
         </Form.Item>
         <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
