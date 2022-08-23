@@ -1,8 +1,10 @@
 import express from 'express';
+require('express-async-errors');
 import routes from './routes';
 import { Server } from 'http';
 import { MongoClient } from 'mongodb';
 import { initializeCollections } from './services/collections';
+import { ApiError } from './types/api';
 
 let server: Server;
 
@@ -19,9 +21,20 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     if (res.headersSent) {
         return next(err);
     }
-    console.error('server error', err);
-    res.status(500);
-    res.render('error', { error: err });
+    if (err instanceof ApiError) {
+        let status = 500;
+        switch (err.errorType) {
+            case 'badRequest':
+                status = 400;
+                break;
+            case 'unauthorized':
+                status = 401;
+                break;
+        }
+        return res.status(status).send(err.message);
+    } else {
+        return res.status(500).send(process.env.NODE_ENV == 'production' ? 'server error' : err.message || JSON.stringify(err));
+    }
 });
 
 // connect to mongodb

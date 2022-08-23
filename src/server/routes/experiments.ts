@@ -7,20 +7,26 @@ import { Experiment, Worker } from '../types/models';
 import { objectId } from '../utils/models';
 import { hashPassword } from './auth';
 import { rmSync, existsSync } from 'fs';
-import { WorkersBatchCreationData } from '../types/api';
+import { ApiError, WorkersBatchCreationData } from '../types/api';
 
 const experimentsRouter = express.Router();
-experimentsRouter.get('/', async (req, res) => {
-    const experiments = await find('experiments', {}); // TODO - show only user relevant experiments
+experimentsRouter.get('/', async (req, res, next) => {
+    const experiments = await find('experiments', req.userRole == 'admin' ? {} : {user: objectId(req.userId)});
     res.json(experiments);
 });
+const validateExperimentAccess = (experiment: Experiment, req: express.Request) => {    
+    if (!experiment)    
+        throw new ApiError('badRequest', 'Experiment does not exist');
+        
+    if (!(req.userRole == 'admin' || experiment.user.equals(objectId(req.userId))))
+        throw new ApiError('unauthorized', 'Experiment does not exist');
+}
 const RESULT_BATCH = 20;
 experimentsRouter.get('/:id/results/:download?', async (req, res) => {
     const download = req.params.download === 'download';
     
     const experiment = await get('experiments', req.params.id);
-    if (!experiment) // TODO - validate access
-        return res.status(400).send('Experiment does not exist');
+    validateExperimentAccess(experiment, req);
 
     const workers = await find('workers', {experiment: objectId(req.params.id)}, {projection: {_id: 1}});
     
@@ -50,8 +56,8 @@ experimentsRouter.get('/:id/results/:download?', async (req, res) => {
 });
 experimentsRouter.delete('/:id', async (req, res) => {
     const experiment = await get('experiments', req.params.id);
-    if (!experiment) // TODO - validate access
-        return res.status(400).send('Experiment does not exist');
+    validateExperimentAccess(experiment, req);
+
     const workers = await find('workers', {experiment: objectId(req.params.id)});
     if (workers?.length > 0)
         return res.status(400).send(`can't delete experiment with workers`);
@@ -64,6 +70,7 @@ experimentsRouter.post('/', async (req, res) => {
     let existing = experiment._id && await get('experiments', experiment._id);
     const directory = `${process.env.STUDY_ASSETS_FOLDER}/${experiment.name}`;
     if (existing) {
+        validateExperimentAccess(existing, req);
         // no need to update anything yet - just pull repo
         // const update = omit(experiment,'_id', 'name','git','user');
         // updateOne('experiments', experiment._id, update);
@@ -90,24 +97,27 @@ experimentsRouter.post('/', async (req, res) => {
     res.json(existing);
 });
 experimentsRouter.get('/:id/workers', async (req, res) => {
+    const experiment = await get('experiments', req.params.id);
+    validateExperimentAccess(experiment, req);
+
     const workers = await find('workers', {experiment: objectId(req.params.id)});
     res.json(workers);
 });
 experimentsRouter.delete('/:id/workers/:workerId', async (req, res) => {
     const experiment = await get('experiments', req.params.id);
-    if (!experiment) // TODO - validate access
-        return res.status(400).send('Experiment does not exist');
+    validateExperimentAccess(experiment, req);
+
     const worker = await findOne('workers', {experiment: objectId(req.params.id), _id: objectId(req.params.workerId)});
-    if (!worker) // TODO - validate access
+    if (!worker)
         return res.status(400).send('Worker does not exist');
     await deleteOne('workers', worker._id);
     res.status(200).send();
 });
 experimentsRouter.post('/:id/workers', async (req, res) => {
     const worker = req.body as Worker;
-    const experiment = await get('experiments', req.params.id); // TODO: validate user access to experiment
-    if (!experiment)
-        return res.status(400).send('Experiment does not exists');
+    const experiment = await get('experiments', req.params.id); 
+    validateExperimentAccess(experiment, req);
+
     let result = worker._id && await get('workers', worker._id);
     if (result) {
         if (!objectId(worker.experiment).equals(experiment._id))
@@ -123,9 +133,8 @@ experimentsRouter.post('/:id/workers', async (req, res) => {
 });
 experimentsRouter.post('/:id/batches', async (req, res) => {
     const {size, name: batchName} = req.body as WorkersBatchCreationData;
-    const experiment = await get('experiments', req.params.id); // TODO: validate user access to experiment
-    if (!experiment)
-        return res.status(400).send('Experiment does not exists');
+    const experiment = await get('experiments', req.params.id);
+    validateExperimentAccess(experiment, req);
 
     const getWorkerName = (id: number) => `${batchName}-${id}`;
     const existing = await findOne('workers', {experiment: experiment._id, name: getWorkerName(1)});
@@ -141,4 +150,5 @@ experimentsRouter.post('/:id/batches', async (req, res) => {
 
     res.json({succuss: true});
 });
+
 export default experimentsRouter;
