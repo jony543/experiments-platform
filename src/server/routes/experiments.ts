@@ -46,9 +46,16 @@ experimentsRouter.get('/:id/results/:download?', async (req, res) => {
     responseStream.write('[');
     let sessions;
     let count = 0;
+    let firstBatch = true;
     while ((sessions = await find('sessions', {subId: {$in: workers.map(w => w._id)}}, {skip: count, limit: RESULT_BATCH})).length) {
         count += sessions.length;
-        res.write(JSON.stringify(sessions));
+        const str = JSON.stringify(sessions); 
+        if (firstBatch) {
+            firstBatch = false;
+        } else {
+            res.write(',');
+        }
+        res.write(str.substring(1, str.length - 2));
     }
     console.log('experiment results', {experiment: req.params.id, download, count});
     responseStream.write(']');
