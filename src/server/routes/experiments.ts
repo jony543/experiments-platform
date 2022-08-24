@@ -55,7 +55,7 @@ experimentsRouter.get('/:id/results/:download?', async (req, res) => {
         } else {
             res.write(',');
         }
-        res.write(str.substring(1, str.length - 2));
+        res.write(str.substring(1, str.length - 1));
     }
     console.log('experiment results', {experiment: req.params.id, download, count});
     responseStream.write(']');
