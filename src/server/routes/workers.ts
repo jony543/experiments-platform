@@ -14,8 +14,8 @@ workersApi.post('/sessions', async (req, res) => {
         const result = await get('sessions', session._id);
         res.json(result);
     } else {
-        const [result] = await create('sessions', { ...session, subId: objectId(req.workerId) });
-        res.json(result);
+        const [_id] = await create('sessions', { ...session, subId: objectId(req.workerId) });
+        res.json({_id});
     }
 });
 
