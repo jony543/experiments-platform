@@ -32,6 +32,15 @@ export default (app: Application) => {
     const publicRoutes = express.Router();
     publicRoutes.use('/garmin', garminRouter);
     publicRoutes.use('/experiment',
+        async (req, res, next) => {
+            // skipping authentication for icon request due to IOS issue
+            // https://stackoverflow.com/questions/53721065/pwa-icon-not-used-by-ios-devices
+            if (req.url.includes('icon') && req.url.match(/.(png|ico)$/i)) {
+                console.log('skipping authentication for icon request');
+                return express.static(process.env.STUDY_ASSETS_FOLDER)(req, res, next);
+            } else
+                next();
+        },
         verifyWorkerMiddleware,
         async (req, res, next) => { // verify worker experiment
             const experimentName = decodeURIComponent(new URL(req.url, 'http://dummy').pathname.split('/').find(Boolean));
