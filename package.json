@@ -10,8 +10,7 @@
     "start": "node -r dotenv/config ./dist/server",
     "start:dev:server": "tsc-watch --noClear -b ./src/server/tsconfig.json --onSuccess \"node -r dotenv/config --inspect index.js\"",
     "start:dev:client": "webpack server --mode development",
-    "start:dev": "npm run start:dev:client & npm run start:dev:server",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start:dev": "npm run start:dev:client & npm run start:dev:server"
   },
   "repository": {
     "type": "git",
