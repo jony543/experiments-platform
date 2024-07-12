@@ -3,6 +3,7 @@
         "target": "ES2021",
         "sourceMap": true,
         "module": "commonjs",
+        "jsx": "react",
         "esModuleInterop": true,
         "removeComments": true,
         "outDir": "../../dist/server",
